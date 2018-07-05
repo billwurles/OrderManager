@@ -13,13 +13,13 @@ fi
 # Colorised bash prompt
 export PS1="\[\033[38;5;69m\]\u\[$(tput sgr0)\]\[\033[38;5;202m\]@\[$(tput sgr0)\]\[\033[38;5;2m\]\h\[$(tput sgr0)\]\[\033[38;5;202m\]:\[$(tput sgr0)\]\[\033[38;5;6m\][\[$(tput sgr0)\]\[\033[38;5;43m\]\w\[$(tput sgr0)\]\[\033[38;5;6m\]]\[$(tput sgr0)\]\[\033[38;5;202m\]\\$\[$(tput sgr0)\]\[\033[38;5;15m\] \[$(tput sgr0)\]"
 
-#cd & ls -lah all in one!
+#cd & ls -lavh all in one!
 cdl()
 {
 if [ "$#" = 0 ]; then
-cd ~ && ls -lah --color=auto
+cd ~ && ls -lavh --color=auto
 elif [ -d "$@" ]; then
-cd "$@" && ls -lah --color=auto
+cd "$@" && ls -lavh --color=auto
 else
 echo "$@" directory not found!!!
 fi
@@ -29,7 +29,7 @@ fi
 alias ls='ls --color=auto'
 
 ## Use a long listing format ##
-alias ll='ls -lah'
+alias ll='ls -lavh'
 
 alias grep='grep --color=auto'
 alias egrep='egrep --color=auto'
