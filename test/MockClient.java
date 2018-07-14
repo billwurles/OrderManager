@@ -1,3 +1,5 @@
+import java.io.IOException;
+
 class MockClient extends Thread{
 	int port;
 	MockClient(String name,int port){
