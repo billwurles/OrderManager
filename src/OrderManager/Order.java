@@ -10,7 +10,7 @@ public class Order implements Serializable{
 	short orderRouter;
 	public int ClientOrderID; //TODO refactor to lowercase C
 	int size;
-	double[]bestPrices;
+	double[] bestPrices;
 	int bestPriceCount;
 	public int sliceSizes(){
 		int totalSizeOfSlices=0;

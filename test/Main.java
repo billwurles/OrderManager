@@ -11,15 +11,21 @@ public class Main{
 		System.out.println("TEST: this program tests ordermanager");
 
 		//start sample clients
-		MockClient c1=new MockClient("Client 1",2000);
-		c1.start();
-		(new MockClient("Client 2",2001)).start();
+		MockClient client1=new MockClient("Client 1",2000);
+		MockClient client2=new MockClient("Client 2",2001);
+		SampleRouter router1=new SampleRouter("Router LSE",2010));
+		SampleRouter router2=new SampleRouter("Router BATE",2011));
+
+		client1.start();
+		client2.start();
 		
 		//start sample routers
-		(new SampleRouter("Router LSE",2010)).start();
-		(new SampleRouter("Router BATE",2011)).start();
-	
-		(new Trader("Trader James",2020)).start();
+		router1.start();
+		router2.start();
+
+		Trader traderJames = new Trader("Trader James",2020);
+		traderJames.start();
+
 		//start order manager
 		InetSocketAddress[] clients={new InetSocketAddress("localhost",2000),
 		                     new InetSocketAddress("localhost",2001)};
