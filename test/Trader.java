@@ -46,8 +46,8 @@ public class Trader extends Thread implements TradeScreen {
                         is.readObject();
                         break; //TODO
                     case fill:
-                        is.readInt();
-                        is.readObject();
+                        int i = is.readInt();
+                        Object o = is.readObject();
                         break; //TODO
                 }
             }
@@ -86,6 +86,6 @@ public class Trader extends Thread implements TradeScreen {
     public void price(int id, Order o) throws IOException {
         //TODO should update the trade screen
         //Thread.sleep(2134);
-        sliceOrder(id, orders.get(id).sizeRemaining() / 2);
+        sliceOrder(id, orders.get(id).sizeRemaining() / 2); //FIXME (Kel): Are we sure that we don't get rounding errors? Can we error here and send bad results?
     }
 }

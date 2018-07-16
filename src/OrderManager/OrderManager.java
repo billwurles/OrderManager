@@ -63,17 +63,14 @@ public class OrderManager {
             this.clients[i] = connect(location);
             i++;
         }
+    }
 
-        //We can probably split the class here.
-
-        int clientId, routerId;
-        Socket client, router;
-        //Main loop
+    public void mainLoop() throws java.io.IOException, java.lang.ClassNotFoundException, InterruptedException {
         while (true) {
             //TODO (Kel): Can we think of a better polling technique than using 20 ns sleeps?
             //we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
-            for (clientId = 0; clientId < this.clients.length; clientId++) { //check if we have data on any of the sockets
-                client = this.clients[clientId];
+            for (int clientId = 0; clientId < this.clients.length; clientId++) { //check if we have data on any of the sockets
+                Socket client = this.clients[clientId];
                 if (0 < client.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
                     ObjectInputStream is = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
                     String method = (String) is.readObject();
@@ -89,8 +86,8 @@ public class OrderManager {
                     }
                 }
             }
-            for (routerId = 0; routerId < this.orderRouters.length; routerId++) { //check if we have data on any of the sockets
-                router = this.orderRouters[routerId];
+            for (int routerId = 0; routerId < this.orderRouters.length; routerId++) { //check if we have data on any of the sockets
+                Socket router = this.orderRouters[routerId];
                 if (0 < router.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
                     ObjectInputStream is = new ObjectInputStream(router.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
                     String method = (String) is.readObject();

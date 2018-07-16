@@ -26,7 +26,7 @@ public class Order implements Serializable {
 
     public int sizeFilled() {
         int filledSoFar = 0;
-        for (Fill f : fills) {
+        for (Fill f : fills) { //TODO (Kel): Really? Scan through every fill every time?
             filledSoFar += f.size;
         }
         for (Order c : slices) {

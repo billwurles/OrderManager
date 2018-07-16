@@ -24,7 +24,7 @@ class MockOM extends Thread {
     public void run() {
         try {
             //In order to debug constructors you can do F5 F7 F5
-            new OrderManager(routers, clients, trader, liveMarketData);
+            (new OrderManager(routers, clients, trader, liveMarketData)).mainLoop();
         } catch (IOException | ClassNotFoundException | InterruptedException ex) {
             Logger.getLogger(MockOM.class.getName()).log(Level.SEVERE, null, ex);
         }
