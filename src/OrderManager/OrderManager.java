@@ -35,7 +35,7 @@ public class OrderManager {
 				s.setKeepAlive(true);
 				return s;
 			}catch (IOException e) {
-				Thread.sleep(1000);
+				//Thread.sleep(1000);
 				tryCounter++;
 			}
 		}

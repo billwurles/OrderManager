@@ -36,7 +36,7 @@ public class SampleRouter extends Thread implements Router{
 						case priceAtSize:priceAtSize(is.readInt(),is.readInt(),(Instrument)is.readObject(),is.readInt());break;
 					}
 				}else{
-					Thread.sleep(100);
+					//Thread.sleep(100);
 				}
 			}
 		} catch (IOException | ClassNotFoundException | InterruptedException e) {
@@ -49,7 +49,7 @@ public class SampleRouter extends Thread implements Router{
 		int fillSize=RANDOM_NUM_GENERATOR.nextInt(size);
 		//TODO have this similar to the market price of the instrument
 		double fillPrice=199*RANDOM_NUM_GENERATOR.nextDouble();
-		Thread.sleep(42);
+		//Thread.sleep(42);
 		os=new ObjectOutputStream(omConn.getOutputStream());
 		os.writeObject("newFill");
 		os.writeInt(id);
