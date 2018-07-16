@@ -17,7 +17,7 @@ public class Main{
 		SampleRouter router2=new SampleRouter("Router BATE",2011));
 
 		Thread client1Thread = new Thread(client1);
-		Thread client2Thread = new Thread(client2);
+		Thread client2Thread = new Thread(client2); //test
 		client1Thread.start();
 		client2Thread.start();
 		
