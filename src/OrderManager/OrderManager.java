@@ -70,7 +70,7 @@ public class OrderManager {
         Socket client, router;
         //Main loop
         while (true) {
-            //TODO this is pretty cpu intensive, use a more modern polling/interrupt/select approach
+            //TODO (Kel): Can we think of a better polling technique than using 20 ns sleeps?
             //we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
             for (clientId = 0; clientId < this.clients.length; clientId++) { //check if we have data on any of the sockets
                 client = this.clients[clientId];
@@ -83,7 +83,9 @@ public class OrderManager {
                         case "newOrderSingle":
                             newOrder(clientId, is.readInt(), (NewOrderSingle) is.readObject());
                             break;
-                        //TODO create a default case which errors with "Unknown message type"+...
+                        default:
+                            System.err.println("Unknown message type");
+                            break;
                     }
                 }
             }
@@ -99,7 +101,7 @@ public class OrderManager {
                             int SliceId = is.readInt();
                             Order slice = orders.get(OrderId).slices.get(SliceId);
                             slice.bestPrices[routerId] = is.readDouble();
-                            slice.bestPriceCount += 1;
+                            slice.bestPriceCount++;
                             if (slice.bestPriceCount == slice.bestPrices.length)
                                 reallyRouteOrder(SliceId, slice);
                             break;
@@ -130,9 +132,9 @@ public class OrderManager {
         orders.put(id, new Order(clientId, clientOrderId, nos.instrument, nos.size));
         //send a message to the client with 39=A; //OrdStatus is Fix 39, 'A' is 'Pending New'
         ObjectOutputStream os = new ObjectOutputStream(clients[clientId].getOutputStream());
-        //newOrderSingle acknowledgement
+
         //ClOrdId is 11=
-        os.writeObject("11=" + clientOrderId + ";35=A;39=A;");
+        os.writeObject("11=" + clientOrderId + ";35=A;39=A;"); //FIXME (Kel): Should this be an *object* output steam?
         os.flush();
         sendOrderToTrader(id, orders.get(id), TradeScreen.api.newOrder);
         //send the new order to the trading screen
@@ -150,11 +152,11 @@ public class OrderManager {
 
     public void acceptOrder(int id) throws IOException {
         Order o = orders.get(id);
-        if (o.OrdStatus != 'A') { //Pending New
+        if (o.getOrdStatus() != 'A') { //Pending New
             System.out.println("error accepting order that has already been accepted");
             return;
         }
-        o.OrdStatus = '0'; //New
+        o.setOrdStatus('0'); //New
         ObjectOutputStream os = new ObjectOutputStream(clients[o.clientid].getOutputStream());
         //newOrderSingle acknowledgement
         //ClOrdId is 11=

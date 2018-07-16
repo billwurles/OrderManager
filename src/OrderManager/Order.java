@@ -44,7 +44,10 @@ public class Order implements Serializable {
     public double initialMarketPrice;
     ArrayList<Order> slices;
     ArrayList<Fill> fills;
-    char OrdStatus = 'A'; //OrdStatus is Fix 39, 'A' is 'Pending New'
+    private char OrdStatus = 'A'; //OrdStatus is Fix 39, 'A' is 'Pending New'
+
+    public char getOrdStatus() {return OrdStatus;}
+    public void setOrdStatus(char input) {OrdStatus=input;}
 
     //Status state;
     float price() {
