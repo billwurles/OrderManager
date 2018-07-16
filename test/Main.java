@@ -16,8 +16,10 @@ public class Main{
 		SampleRouter router1=new SampleRouter("Router LSE",2010));
 		SampleRouter router2=new SampleRouter("Router BATE",2011));
 
-		client1.start();
-		client2.start();
+		Thread client1Thread = new Thread(client1);
+		Thread client2Thread = new Thread(client1);
+		client1Thread.start();
+		client2Thread.start();
 		
 		//start sample routers
 		router1.start();
@@ -33,14 +35,19 @@ public class Main{
 		                     new InetSocketAddress("localhost",2011)};
 		InetSocketAddress trader=new InetSocketAddress("localhost",2020);
 		LiveMarketData liveMarketData=new SampleLiveMarketData();
-		(new MockOM("Order Manager",routers,clients,trader,liveMarketData)).start();
+
+		MockOM orderManager = new MockOM("Order Manager",routers,clients,trader,liveMarketData));
+		Thread thread = new Thread(orderManager);
+		thread.start();
 	}
 }
-class MockClient extends Thread{
-	int port;
+class MockClient implements Runnable{
+	private int port;
+	private String name;
+
 	MockClient(String name,int port){
 		this.port=port;
-		this.setName(name);
+		this.name=name;
 	}
 	public void run(){
 		try {
@@ -63,17 +70,18 @@ class MockClient extends Thread{
 	}
 }
 
-class MockOM extends Thread{
-	InetSocketAddress[] clients;
-	InetSocketAddress[] routers;
-	InetSocketAddress trader;
-	LiveMarketData liveMarketData;
+class MockOM implements Runnable{
+	private InetSocketAddress[] clients;
+	private InetSocketAddress[] routers;
+	private InetSocketAddress trader;
+	private LiveMarketData liveMarketData;
+	private String name;
 	MockOM(String name,InetSocketAddress[] routers,InetSocketAddress[] clients,InetSocketAddress trader,LiveMarketData liveMarketData){
 		this.clients=clients;
 		this.routers=routers;
 		this.trader=trader;
 		this.liveMarketData=liveMarketData;
-		this.setName(name);
+		this.name = name;
 	}
 	@Override
 	public void run(){
@@ -81,7 +89,7 @@ class MockOM extends Thread{
 			//In order to debug constructors you can do F5 F7 F5
 			new OrderManager(routers,clients,trader,liveMarketData);
 		}catch(IOException | ClassNotFoundException | InterruptedException ex){
-			Logger.getLogger(MockOM.class.getName()).log(Level.SEVERE,null,ex);
+			Logger.getLogger(this.name).log(Level.SEVERE,null,ex);
 		}
 	}
 }
