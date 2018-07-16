@@ -22,8 +22,8 @@ public class SampleRouter extends Thread implements Router {
         this.port = port;
     }
 
-    ObjectInputStream is;
-    ObjectOutputStream os;
+    private ObjectInputStream is;
+    private ObjectOutputStream os;
 
     public void run() {
         //OM will connect to us
@@ -51,6 +51,7 @@ public class SampleRouter extends Thread implements Router {
     @Override
     public void routeOrder(int id, int sliceId, int size, Instrument i) throws IOException { //MockI.show(""+order);
         int fillSize = RANDOM_NUM_GENERATOR.nextInt(size);
+        System.err.println(currentThread().getName() + ", filled " + fillSize);
         //TODO have this similar to the market price of the instrument
         double fillPrice = 199 * RANDOM_NUM_GENERATOR.nextDouble();
         //Thread.sleep(42);

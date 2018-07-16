@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import OrderClient.Client;
 import OrderClient.NewOrderSingle;
@@ -15,8 +16,8 @@ import Ref.Ric;
 public class SampleClient extends Mock implements Client {
     private static final Random RANDOM_NUM_GENERATOR = new Random();
     private static final Instrument[] INSTRUMENTS = {new Instrument(new Ric("VOD.L")), new Instrument(new Ric("BP.L")), new Instrument(new Ric("BT.L"))};
-    private static final HashMap OUT_QUEUE = new HashMap(); //queue for outgoing orders
-    private int id = 0; //message id number
+    private final HashMap<Integer,NewOrderSingle> OUT_QUEUE = new HashMap<>(); //queue for outgoing orders
+    private static AtomicInteger id = new AtomicInteger(0); //message id number
     private Socket omConn; //connection to order manager
 
     public SampleClient(int port) throws IOException {
@@ -27,13 +28,15 @@ public class SampleClient extends Mock implements Client {
 
     @Override
     public int sendOrder(Object par0) throws IOException {
+        int id = SampleClient.id.getAndIncrement();
         int size = RANDOM_NUM_GENERATOR.nextInt(5000);
         int instid = RANDOM_NUM_GENERATOR.nextInt(3);
         Instrument instrument = INSTRUMENTS[RANDOM_NUM_GENERATOR.nextInt(INSTRUMENTS.length)];
         NewOrderSingle nos = new NewOrderSingle(size, instid, instrument);
 
         show("sendOrder: id=" + id + " size=" + size + " instrument=" + INSTRUMENTS[instid].toString());
-        OUT_QUEUE.put(id, nos);
+        if (OUT_QUEUE.put(id, nos) != null)
+            System.err.println("ERROR!?: Previous ID replaced"); //TODO (Kel): Investigate
         if (omConn.isConnected()) {
             ObjectOutputStream os = new ObjectOutputStream(omConn.getOutputStream());
             os.writeObject("newOrderSingle");
@@ -42,7 +45,7 @@ public class SampleClient extends Mock implements Client {
             os.writeObject(nos);
             os.flush();
         }
-        return id++;
+        return id;
     }
 
     @Override
@@ -107,8 +110,8 @@ public class SampleClient extends Mock implements Client {
                 switch (whatToDo) {
                     case newOrderSingleAcknowledgement:
                         newOrderSingleAcknowledgement(OrderId);
+                        break;
                 }
-					
 					/*message=connection.getMessage();
 					char type;
 					switch(type){

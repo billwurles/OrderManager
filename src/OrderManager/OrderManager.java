@@ -30,7 +30,7 @@ public class OrderManager {
     private Socket connect(InetSocketAddress location) {
         boolean connected = false;
         int tryCounter = 0;
-        while (!connected && tryCounter < 600) { //Why are we trying this number of times?
+        while (!connected && tryCounter < 600) { //FIXME (Kel) Why are we trying this number of times?
             try {
                 Socket s = new Socket(location.getHostName(), location.getPort());
                 s.setKeepAlive(true);
@@ -45,7 +45,7 @@ public class OrderManager {
     }
 
     //@param args the command line arguments
-    public OrderManager(InetSocketAddress[] orderRouters, InetSocketAddress[] clients, InetSocketAddress trader, LiveMarketData liveMarketData) throws IOException, ClassNotFoundException, InterruptedException {
+    public OrderManager(InetSocketAddress[] orderRouters, InetSocketAddress[] clients, InetSocketAddress trader, LiveMarketData liveMarketData) {
         OrderManager.liveMarketData = liveMarketData;
         this.trader = connect(trader);
 
@@ -66,7 +66,8 @@ public class OrderManager {
     }
 
     public void mainLoop() throws java.io.IOException, java.lang.ClassNotFoundException, InterruptedException {
-        while (true) {
+        boolean stillalive = true;
+        while (stillalive) {
             //TODO (Kel): Can we think of a better polling technique than using 20 ns sleeps?
             //we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
             for (int clientId = 0; clientId < this.clients.length; clientId++) { //check if we have data on any of the sockets
@@ -78,7 +79,7 @@ public class OrderManager {
                     switch (method) { //determine the type of message and process it
                         //call the newOrder message with the clientId and the message (clientMessageId,NewOrderSingle)
                         case "newOrderSingle":
-                            newOrder(clientId, is.readInt(), (NewOrderSingle) is.readObject());
+                            newOrder(clientId, is.readInt(), (NewOrderSingle) is.readObject()); //newOrder (clientID,
                             break;
                         default:
                             System.err.println("Unknown message type");
@@ -235,7 +236,7 @@ public class OrderManager {
         }
         ObjectOutputStream os = new ObjectOutputStream(orderRouters[minIndex].getOutputStream());
         os.writeObject(Router.api.routeOrder);
-        os.writeInt(o.id);
+        os.writeInt(o.getId());
         os.writeInt(sliceId);
         os.writeInt(o.sizeRemaining());
         os.writeObject(o.instrument);
