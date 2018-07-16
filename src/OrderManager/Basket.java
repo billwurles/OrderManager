@@ -1,5 +1,5 @@
 package OrderManager;
 
-class Basket{
-	Order[] orders;
+class Basket {
+    Order[] orders;
 }
