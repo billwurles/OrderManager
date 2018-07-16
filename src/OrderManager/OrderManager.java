@@ -27,7 +27,7 @@ public class OrderManager {
     private Socket[] clients;
     private Socket trader;
 
-    private Socket connect(InetSocketAddress location) throws InterruptedException {
+    private Socket connect(InetSocketAddress location) {
         boolean connected = false;
         int tryCounter = 0;
         while (!connected && tryCounter < 600) { //Why are we trying this number of times?
@@ -46,7 +46,7 @@ public class OrderManager {
 
     //@param args the command line arguments
     public OrderManager(InetSocketAddress[] orderRouters, InetSocketAddress[] clients, InetSocketAddress trader, LiveMarketData liveMarketData) throws IOException, ClassNotFoundException, InterruptedException {
-        this.liveMarketData = liveMarketData;
+        OrderManager.liveMarketData = liveMarketData;
         this.trader = connect(trader);
 
         this.orderRouters = new Socket[orderRouters.length];
@@ -183,7 +183,7 @@ public class OrderManager {
 
     private void internalCross(int id, Order o) throws IOException {
         for (Map.Entry<Integer, Order> entry : orders.entrySet()) {
-            if (entry.getKey().intValue() == id) continue;
+            if (entry.getKey() == id) continue;
             Order matchingOrder = entry.getValue();
             if (!(matchingOrder.instrument.equals(o.instrument) && matchingOrder.initialMarketPrice == o.initialMarketPrice))
                 continue;
@@ -196,9 +196,9 @@ public class OrderManager {
         }
     }
 
-    private void cancelOrder() {
+    /*private void cancelOrder() {
 
-    }
+    }*/
 
     private void newFill(int id, int sliceId, int size, double price) throws IOException {
         Order o = orders.get(id);

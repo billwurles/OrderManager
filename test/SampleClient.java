@@ -72,8 +72,6 @@ public class SampleClient extends Mock implements Client {
 
     enum methods {newOrderSingleAcknowledgement, dontKnow}
 
-    ;
-
     @Override
     public void messageHandler() {
 
@@ -91,8 +89,8 @@ public class SampleClient extends Mock implements Client {
                 int OrdStatus;
                 methods whatToDo = methods.dontKnow;
                 //String[][] fixTagsValues=new String[fixTags.length][2];
-                for (int i = 0; i < fixTags.length; i++) {
-                    String[] tag_value = fixTags[i].split("=");
+                for (String fixTag : fixTags) {
+                    String[] tag_value = fixTag.split("=");
                     switch (tag_value[0]) {
                         case "11":
                             OrderId = Integer.parseInt(tag_value[1]);

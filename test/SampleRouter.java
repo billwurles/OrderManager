@@ -32,7 +32,7 @@ public class SampleRouter extends Thread implements Router {
             while (true) {
                 is = new ObjectInputStream(omConn.getInputStream());
                 Router.api methodName = (Router.api) is.readObject();
-                System.out.println("Order Router recieved method call for:" + methodName);
+                System.out.println("Order Router received method call for:" + methodName);
                 switch (methodName) {
                     case routeOrder:
                         routeOrder(is.readInt(), is.readInt(), is.readInt(), (Instrument) is.readObject());
@@ -42,14 +42,14 @@ public class SampleRouter extends Thread implements Router {
                         break;
                 }
             }
-        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+        } catch (IOException | ClassNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
     @Override
-    public void routeOrder(int id, int sliceId, int size, Instrument i) throws IOException, InterruptedException { //MockI.show(""+order);
+    public void routeOrder(int id, int sliceId, int size, Instrument i) throws IOException { //MockI.show(""+order);
         int fillSize = RANDOM_NUM_GENERATOR.nextInt(size);
         //TODO have this similar to the market price of the instrument
         double fillPrice = 199 * RANDOM_NUM_GENERATOR.nextDouble();

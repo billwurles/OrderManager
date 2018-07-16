@@ -7,7 +7,7 @@ import LiveMarketData.LiveMarketData;
 import OrderManager.OrderManager;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         System.out.println("TEST: this program tests ordermanager");
 
         //start sample clients

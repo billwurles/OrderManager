@@ -125,17 +125,17 @@ public class Order implements Serializable {
         }
     }
 
-    void cancel() {
+    /*void cancel() {
         //state=cancelled
-    }
+    }*/
 
     public Order(int clientId, int ClientOrderID, Instrument instrument, int size) {
         this.ClientOrderID = ClientOrderID;
         this.size = size;
         this.clientid = clientId;
         this.instrument = instrument;
-        fills = new ArrayList<Fill>();
-        slices = new ArrayList<Order>();
+        fills = new ArrayList<>();
+        slices = new ArrayList<>();
     }
 }
 

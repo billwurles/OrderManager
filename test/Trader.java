@@ -11,7 +11,7 @@ import OrderManager.Order;
 import TradeScreen.TradeScreen;
 
 public class Trader extends Thread implements TradeScreen {
-    private HashMap<Integer, Order> orders = new HashMap<Integer, Order>();
+    private HashMap<Integer, Order> orders = new HashMap<>();
     private static Socket omConn;
     private int port;
 
@@ -51,14 +51,14 @@ public class Trader extends Thread implements TradeScreen {
                         break; //TODO
                 }
             }
-        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+        } catch (IOException | ClassNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
     @Override
-    public void newOrder(int id, Order order) throws IOException, InterruptedException {
+    public void newOrder(int id, Order order) throws IOException {
         //TODO the order should go in a visual grid, but not needed for test purposes
         //Thread.sleep(2134);
         orders.put(id, order);
@@ -83,7 +83,7 @@ public class Trader extends Thread implements TradeScreen {
     }
 
     @Override
-    public void price(int id, Order o) throws InterruptedException, IOException {
+    public void price(int id, Order o) throws IOException {
         //TODO should update the trade screen
         //Thread.sleep(2134);
         sliceOrder(id, orders.get(id).sizeRemaining() / 2);
