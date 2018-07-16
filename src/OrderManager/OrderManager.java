@@ -20,16 +20,16 @@ import TradeScreen.TradeScreen;
 
 public class OrderManager {
 	private static LiveMarketData liveMarketData;
-	private HashMap<Integer,Order> orders; //debugger will do this line as it gives state to the object
+	private HashMap<Integer,Order> orders = new HashMap<>(); //debugger will do this line as it gives state to the object
 	//currently recording the number of new order messages we get. TODO why? use it for more?
 	private int id;
-	private Socket[] orderRouters; //debugger will skip these lines as they disappear at compile time into 'the object'/stack
+	private Socket[] orderRouters;
 	private Socket[] clients;
 	private Socket trader;
 	private Socket connect(InetSocketAddress location) throws InterruptedException{
 		boolean connected=false;
 		int tryCounter=0;
-		while(!connected&&tryCounter<600){ //Why are we
+		while(!connected&&tryCounter<600){ //Why are we trying this number of times?
 			try{
 				Socket s=new Socket(location.getHostName(),location.getPort());
 				s.setKeepAlive(true);
@@ -46,25 +46,27 @@ public class OrderManager {
 	public OrderManager(InetSocketAddress[] orderRouters, InetSocketAddress[] clients,InetSocketAddress trader,LiveMarketData liveMarketData)throws IOException, ClassNotFoundException, InterruptedException{
 		this.liveMarketData=liveMarketData;
 		this.trader=connect(trader);
-		//for the router connections, copy the input array into our object field.
-		//but rather than taking the address we create a socket+ephemeral port and connect it to the address
+
 		this.orderRouters=new Socket[orderRouters.length];
+
 		int i=0; //need a counter for the the output array
 		for(InetSocketAddress location:orderRouters){
 			this.orderRouters[i]=connect(location);
 			i++;
 		}
 
-		//repeat for the client connections
 		this.clients=new Socket[clients.length];
 		i=0;
 		for(InetSocketAddress location:clients){
 			this.clients[i]=connect(location);
 			i++;
 		}
+
+		//We can probably split the class here.
+
 		int clientId,routerId;
 		Socket client,router;
-		//main loop, wait for a message, then process it
+		//Main loop
 		while(true){
 			//TODO this is pretty cpu intensive, use a more modern polling/interrupt/select approach
 			//we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
@@ -110,6 +112,7 @@ public class OrderManager {
 					case "sliceOrder":sliceOrder(is.readInt(), is.readInt());
 				}
 			}
+			Thread.sleep(0,20);
 		}
 	}
 	private void newOrder(int clientId, int clientOrderId, NewOrderSingle nos) throws IOException{

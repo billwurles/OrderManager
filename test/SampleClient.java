@@ -75,8 +75,8 @@ public class SampleClient extends Mock implements Client{
 		try {
 			while(true){
 				//is.wait(); //this throws an exception!!
-				while(0<omConn.getInputStream().available()){
 					is = new ObjectInputStream(omConn.getInputStream());
+
 					String fix=(String)is.readObject();
 					System.out.println(Thread.currentThread().getName()+" received fix message: "+fix);
 					String[] fixTags=fix.split(";");
@@ -106,9 +106,8 @@ public class SampleClient extends Mock implements Client{
 						case 'P':partialFill(message);break;
 						case 'F':fullyFilled(message);
 					}*/
-					show("");
+					show("SampleClient line 109");
 				}
-			}
 		} catch (IOException|ClassNotFoundException e){
 			// TODO Auto-generated catch block
 			e.printStackTrace();

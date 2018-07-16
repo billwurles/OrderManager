@@ -28,7 +28,6 @@ public class Trader extends Thread implements TradeScreen{
 			//is=new ObjectInputStream( omConn.getInputStream());
 			InputStream s=omConn.getInputStream(); //if i try to create an objectinputstream before we have data it will block
 			while(true){
-				if(0<s.available()){
 					is=new ObjectInputStream(s);  //TODO check if we need to create each time. this will block if no data, but maybe we can still try to create it once instead of repeatedly
 					api method=(api)is.readObject();
 					System.out.println(Thread.currentThread().getName()+" calling: "+method);
@@ -38,10 +37,6 @@ public class Trader extends Thread implements TradeScreen{
 						case cross:is.readInt();is.readObject();break; //TODO
 						case fill:is.readInt();is.readObject();break; //TODO
 					}
-				}else{
-					//System.out.println("Trader Waiting for data to be available - sleep 1s");
-					//Thread.sleep(1000);
-				}
 			}
 		} catch (IOException | ClassNotFoundException | InterruptedException e) {
 			// TODO Auto-generated catch block
