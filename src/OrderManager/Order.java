@@ -83,7 +83,7 @@ public class Order implements Serializable{
 					matchingOrder.createFill(sze, initialMarketPrice);
 				}else{
 					slice.createFill(mParent,initialMarketPrice);
-					matchingOrder.createFill(mParent, initialMarketPrice);					
+					matchingOrder.createFill(mParent, initialMarketPrice);
 				}
 			}
 			//no point continuing if we didn't fill this slice, as we must already have fully filled the matchingOrder
@@ -111,7 +111,7 @@ public class Order implements Serializable{
 					matchingOrder.createFill(sze, initialMarketPrice);
 				}else{
 					createFill(mParent,initialMarketPrice);
-					matchingOrder.createFill(mParent, initialMarketPrice);					
+					matchingOrder.createFill(mParent, initialMarketPrice);
 				}
 			}
 		}
@@ -129,16 +129,3 @@ public class Order implements Serializable{
 	}
 }
 
-class Basket{
-	Order[] orders;
-}
-
-class Fill implements Serializable{
-	//long id;
-	int size;
-	double price;
-	Fill(int size,double price){
-		this.size=size;
-		this.price=price;
-	}
-}
