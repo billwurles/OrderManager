@@ -20,16 +20,16 @@ import TradeScreen.TradeScreen;
 
 public class OrderManager {
 	private static LiveMarketData liveMarketData;
-	private HashMap<Integer,Order> orders=new HashMap<Integer,Order>(); //debugger will do this line as it gives state to the object
+	private HashMap<Integer,Order> orders; //debugger will do this line as it gives state to the object
 	//currently recording the number of new order messages we get. TODO why? use it for more?
-	private int id=0; //debugger will do this line as it gives state to the object
-	private Socket[] orderRouters; //debugger will skip these lines as they dissapear at compile time into 'the object'/stack
+	private int id;
+	private Socket[] orderRouters; //debugger will skip these lines as they disappear at compile time into 'the object'/stack
 	private Socket[] clients;
 	private Socket trader;
 	private Socket connect(InetSocketAddress location) throws InterruptedException{
 		boolean connected=false;
 		int tryCounter=0;
-		while(!connected&&tryCounter<600){
+		while(!connected&&tryCounter<600){ //Why are we
 			try{
 				Socket s=new Socket(location.getHostName(),location.getPort());
 				s.setKeepAlive(true);
