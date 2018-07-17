@@ -32,27 +32,29 @@ public class SampleClient extends Mock implements Client {
         int size = RANDOM_NUM_GENERATOR.nextInt(5000);
         int instid = RANDOM_NUM_GENERATOR.nextInt(3);
         Instrument instrument = INSTRUMENTS[RANDOM_NUM_GENERATOR.nextInt(INSTRUMENTS.length)];
-        NewOrderSingle nos = new NewOrderSingle(size, instid, instrument);
+        NewOrderSingle newOrderSingle = new NewOrderSingle(size, instid, instrument);
 
         show("sendOrder: id=" + id + " size=" + size + " instrument=" + INSTRUMENTS[instid].toString());
-        if (OUT_QUEUE.put(id, nos) != null)
-            System.err.println("ERROR!?: Previous ID replaced"); //TODO (Kel): Investigate
+        if (OUT_QUEUE.put(id, newOrderSingle) != null)
+            System.err.println("ERROR!?: Previous ID replaced");
         if (omConn.isConnected()) {
-            ObjectOutputStream os = new ObjectOutputStream(omConn.getOutputStream());
-            os.writeObject("newOrderSingle");
+            ObjectOutputStream outputStream = new ObjectOutputStream(omConn.getOutputStream());
+            outputStream.writeObject("newOrderSingle");
             //os.writeObject("35=D;");
-            os.writeInt(id);
-            os.writeObject(nos);
-            os.flush();
+            outputStream.writeInt(id);
+            outputStream.writeObject(newOrderSingle);
+            outputStream.flush();
         }
         return id;
     }
 
     @Override
-    public void sendCancel(int idToCancel) {
+    public void sendCancel(int idToCancel) throws IOException {
         show("sendCancel: id=" + idToCancel);
         if (omConn.isConnected()) {
-            //OMconnection.sendMessage("cancel",idToCancel);
+            ObjectOutputStream orderManagerStream = new ObjectOutputStream(omConn.getOutputStream());
+            orderManagerStream.writeObject("cancelOrder");
+            orderManagerStream.writeInt(idToCancel);
         }
     }
 
@@ -119,7 +121,7 @@ public class SampleClient extends Mock implements Client {
 						case 'P':partialFill(message);break;
 						case 'F':fullyFilled(message);
 					}*/
-                show("SampleClient line 109");
+                show("messageHandler loop");
             }
         } catch (IOException | ClassNotFoundException e) {
             // TODO Auto-generated catch block

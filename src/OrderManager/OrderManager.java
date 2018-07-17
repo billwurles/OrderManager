@@ -5,17 +5,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.IntSummaryStatistics;
-import java.util.Map;
+import java.util.*;
 
 import Database.Database;
 import LiveMarketData.LiveMarketData;
 import OrderClient.NewOrderSingle;
 import OrderRouter.Router;
-import OrderRouter.Router.api;
 import TradeScreen.TradeScreen;
 
 public class OrderManager {
@@ -65,64 +60,78 @@ public class OrderManager {
         }
     }
 
-    public void mainLoop() throws java.io.IOException, java.lang.ClassNotFoundException, InterruptedException {
+    public void mainLoop() throws IOException, ClassNotFoundException, InterruptedException {
         boolean stillalive = true;
         while (stillalive) {
             //TODO (Kel): Can we think of a better polling technique than using 20 ns sleeps?
             //we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
-            for (int clientId = 0; clientId < this.clients.length; clientId++) { //check if we have data on any of the sockets
-                Socket client = this.clients[clientId];
-                if (0 < client.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
-                    ObjectInputStream is = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
-                    String method = (String) is.readObject();
-                    System.out.println(Thread.currentThread().getName() + " calling " + method);
-                    switch (method) { //determine the type of message and process it
-                        //call the newOrder message with the clientId and the message (clientMessageId,NewOrderSingle)
-                        case "newOrderSingle":
-                            newOrder(clientId, is.readInt(), (NewOrderSingle) is.readObject()); //newOrder (clientID,
-                            break;
-                        default:
-                            System.err.println("Unknown message type");
-                            break;
-                    }
-                }
-            }
-            for (int routerId = 0; routerId < this.orderRouters.length; routerId++) { //check if we have data on any of the sockets
-                Socket router = this.orderRouters[routerId];
-                if (0 < router.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
-                    ObjectInputStream is = new ObjectInputStream(router.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
-                    String method = (String) is.readObject();
-                    System.out.println(Thread.currentThread().getName() + " calling " + method);
-                    switch (method) { //determine the type of message and process it
-                        case "bestPrice":
-                            int OrderId = is.readInt();
-                            int SliceId = is.readInt();
-                            Order slice = orders.get(OrderId).slices.get(SliceId);
-                            slice.bestPrices[routerId] = is.readDouble();
-                            slice.bestPriceCount++;
-                            if (slice.bestPriceCount == slice.bestPrices.length)
-                                reallyRouteOrder(SliceId, slice);
-                            break;
-                        case "newFill":
-                            newFill(is.readInt(), is.readInt(), is.readInt(), is.readDouble());
-                            break;
-                    }
-                }
-            }
+            pollClients();
+            pollRouters();
+            pollTraders();
+            Thread.sleep(0, 20);
+        }
+    }
 
-            if (0 < this.trader.getInputStream().available()) {
-                ObjectInputStream is = new ObjectInputStream(this.trader.getInputStream());
+    void pollClients() throws IOException, ClassNotFoundException {
+        for (int clientId = 0; clientId < this.clients.length; clientId++) { //check if we have data on any of the sockets
+            Socket client = this.clients[clientId];
+            if (0 < client.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
+                ObjectInputStream is = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
                 String method = (String) is.readObject();
                 System.out.println(Thread.currentThread().getName() + " calling " + method);
-                switch (method) {
-                    case "acceptOrder":
-                        acceptOrder(is.readInt());
+                switch (method) { //determine the type of message and process it
+                    //call the newOrder message with the clientId and the message (clientMessageId,NewOrderSingle)
+                    case "newOrderSingle":
+                        newOrder(clientId, is.readInt(), (NewOrderSingle) is.readObject()); //newOrder (clientID,
                         break;
-                    case "sliceOrder":
-                        sliceOrder(is.readInt(), is.readInt());
+                    default:
+                        System.err.println("Unknown message type");
+                        break;
                 }
             }
-            Thread.sleep(0, 20);
+        }
+    }
+
+    void pollRouters() throws IOException, ClassNotFoundException {
+        for (int routerId = 0; routerId < this.orderRouters.length; routerId++) { //check if we have data on any of the sockets
+            Socket router = this.orderRouters[routerId];
+            if (0 < router.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
+                ObjectInputStream is = new ObjectInputStream(router.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
+                String method = (String) is.readObject();
+                System.out.println(Thread.currentThread().getName() + " calling " + method);
+                switch (method) { //determine the type of message and process it
+                    case "bestPrice":
+                        int OrderId = is.readInt();
+                        int SliceId = is.readInt();
+                        Order slice = orders.get(OrderId).slices.get(SliceId);
+                        slice.bestPrices[routerId] = is.readDouble();
+                        slice.bestPriceCount++;
+                        if (slice.bestPriceCount == slice.bestPrices.length)
+                            reallyRouteOrder(SliceId, slice);
+                        break;
+                    case "newFill":
+                        int id = is.readInt();
+                        newFill(id, is.readInt(), is.readInt(), is.readDouble());
+                        //price(id,orders.get(id));
+                        break;
+                }
+            }
+        }
+    }
+
+    void pollTraders() throws IOException, ClassNotFoundException {
+        if (0 < this.trader.getInputStream().available()) {
+            ObjectInputStream is = new ObjectInputStream(this.trader.getInputStream());
+            String method = (String) is.readObject();
+            System.out.println(Thread.currentThread().getName() + " calling " + method);
+            switch (method) {
+                case "acceptOrder":
+                    acceptOrder(is.readInt());
+                    break;
+                case "sliceOrder":
+                    sliceOrder(is.readInt(), is.readInt());
+                    break;
+            }
         }
     }
 
@@ -165,19 +174,14 @@ public class OrderManager {
     }
 
     public void sliceOrder(int id, int sliceSize) throws IOException {
-        Order o = orders.get(id);
+        Order order = orders.get(id);
         //slice the order. We have to check this is a valid size.
-        //Order has a list of slices, and a list of fills, each slice is a childorder and each fill is associated with either a child order or the original order
-        if (sliceSize > o.sizeRemaining() - o.sliceSizes()) {
-            System.out.println("error sliceSize is bigger than remaining size to be filled on the order");
-            return;
-        }
-        int sliceId = o.newSlice(sliceSize);
-        Order slice = o.slices.get(sliceId);
-        internalCross(id, slice);
-        int sizeRemaining = o.slices.get(sliceId).sizeRemaining();
-        if (sizeRemaining > 0) {
-            routeOrder(id, sliceId, sizeRemaining, slice);
+        //Order has a list of slices, and a list of fills, each slice is a child order and each fill is associated with either a child order or the original order
+        OrderSlicer.sliceOrder(order, sliceSize);
+        OrderSlicer.sliceOrder(order, order.getSize() - order.sliceSizes());
+        //internalCross(id, slice);
+        for (int sliceId = 0; sliceId < order.slices.size(); ++sliceId) {
+            routeOrder(id, sliceId, order.slices.get(sliceId).sizeRemaining(), order.slices.get(sliceId));
         }
     }
 
@@ -216,7 +220,7 @@ public class OrderManager {
             os.writeInt(id);
             os.writeInt(sliceId);
             os.writeObject(order.instrument);
-            os.writeInt(order.sizeRemaining());
+            os.writeInt(size);
             os.flush();
         }
         //need to wait for these prices to come back before routing
