@@ -22,6 +22,7 @@ public class OrderManager {
 	private Socket[] orderRouters; //debugger will skip these lines as they dissapear at compile time into 'the object'/stack
 	private Socket[] clients;
 	private Socket trader;
+
 	private Socket connect(InetSocketAddress location) throws InterruptedException{
 		boolean connected=false;
 		int tryCounter=0;
@@ -29,6 +30,7 @@ public class OrderManager {
 			try{
 				Socket s=new Socket(location.getHostName(),location.getPort());
 				s.setKeepAlive(true);
+				connected=true;
 				return s;
 			}catch (IOException e) {
 				Thread.sleep(1000);
