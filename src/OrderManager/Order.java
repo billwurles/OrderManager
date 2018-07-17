@@ -1,14 +1,15 @@
 package OrderManager;
 
+import Ref.Instrument;
+
 import java.io.Serializable;
 import java.util.ArrayList;
-
-import Ref.Instrument;
 
 public class Order implements Serializable{
 	public int id; //TODO these should all be longs
 	short orderRouter;
 	public int ClientOrderID; //TODO refactor to lowercase C
+
 	int size;
 	double[] bestPrices;
 	int bestPriceCount;

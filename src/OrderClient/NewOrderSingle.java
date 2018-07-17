@@ -1,8 +1,8 @@
 package OrderClient;
 
-import java.io.Serializable;
-
 import Ref.Instrument;
+
+import java.io.Serializable;
 
 public class NewOrderSingle implements Serializable{
 	public int size;

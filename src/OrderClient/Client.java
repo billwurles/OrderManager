@@ -1,8 +1,8 @@
 package OrderClient;
 
-import java.io.IOException;
-
 import OrderManager.Order;
+
+import java.io.IOException;
 
 public interface Client{
 	//Outgoing messages

@@ -1,22 +1,18 @@
 package OrderManager;
 
+import Database.Database;
+import LiveMarketData.LiveMarketData;
+import OrderClient.NewOrderSingle;
+import OrderRouter.Router;
+import TradeScreen.TradeScreen;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.IntSummaryStatistics;
 import java.util.Map;
-
-import Database.Database;
-import LiveMarketData.LiveMarketData;
-import OrderClient.NewOrderSingle;
-import OrderRouter.Router;
-import OrderRouter.Router.api;
-import TradeScreen.TradeScreen;
 
 public class OrderManager {
 	private static LiveMarketData liveMarketData;
@@ -68,6 +64,7 @@ public class OrderManager {
 		while(true){
 			//TODO this is pretty cpu intensive, use a more modern polling/interrupt/select approach
 			//we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
+
 			for(clientId=0;clientId<this.clients.length;clientId++){ //check if we have data on any of the sockets
 				client=this.clients[clientId];
 				if(0<client.getInputStream().available()){ //if we have part of a message ready to read, assuming this doesn't fragment messages
@@ -76,7 +73,9 @@ public class OrderManager {
 					System.out.println(Thread.currentThread().getName()+" calling "+method);
 					switch(method){ //determine the type of message and process it
 						//call the newOrder message with the clientId and the message (clientMessageId,NewOrderSingle)
-						case "newOrderSingle": newOrder(clientId, is.readInt(), (NewOrderSingle)is.readObject());break;
+						case "newOrderSingle":
+							newOrder(clientId, is.readInt(), (NewOrderSingle)is.readObject());
+							break;
 						//TODO create a default case which errors with "Unknown message type"+...
 					}
 				}
@@ -96,7 +95,9 @@ public class OrderManager {
 							if(slice.bestPriceCount==slice.bestPrices.length)
 								reallyRouteOrder(SliceId, slice);
 							break;
-						case "newFill":newFill(is.readInt(),is.readInt(),is.readInt(),is.readDouble());break;
+						case "newFill":
+							newFill(is.readInt(),is.readInt(),is.readInt(),is.readDouble());
+							break;
 					}
 				}
 			}

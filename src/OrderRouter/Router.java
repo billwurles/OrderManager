@@ -1,9 +1,8 @@
 package OrderRouter;
 
-import java.io.IOException;
-
-import OrderManager.Order;
 import Ref.Instrument;
+
+import java.io.IOException;
 
 public interface Router {
 	public enum api{routeOrder,sendCancel,priceAtSize};

@@ -13,8 +13,8 @@ public class Main{
 		//start sample clients
 		MockClient client1=new MockClient("Client 1",2000);
 		MockClient client2=new MockClient("Client 2",2001);
-		SampleRouter router1=new SampleRouter("Router LSE",2010));
-		SampleRouter router2=new SampleRouter("Router BATE",2011));
+		SampleRouter router1=new SampleRouter("Router LSE",2010);
+		SampleRouter router2=new SampleRouter("Router BATE",2011);
 
 		Thread client1Thread = new Thread(client1);
 		Thread client2Thread = new Thread(client2); //test
@@ -56,7 +56,7 @@ class MockClient implements Runnable{
 				//TODO why does this take an arg?
 				client.sendOrder(null);
 				int id=client.sendOrder(null);
-				//TODO client.sendCancel(id);
+				//TODO client.sendCancell(id);
 				client.messageHandler();
 			}else{
 				client.sendOrder(null);

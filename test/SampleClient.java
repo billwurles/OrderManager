@@ -29,9 +29,9 @@ public class SampleClient extends Mock implements Client{
 	public int sendOrder(Object par0)throws IOException{
 		int size=RANDOM_NUM_GENERATOR.nextInt(5000);
 		int instid=RANDOM_NUM_GENERATOR.nextInt(3);
-		Instrument instrument=INSTRUMENTS[RANDOM_NUM_GENERATOR.nextInt(INSTRUMENTS.length)];
+		Instrument instrument=INSTRUMENTS[RANDOM_NUM_GENERATOR.nextInt(INSTRUMENTS.length)]; //TODO this should be -1 maybe
 		NewOrderSingle nos=new NewOrderSingle(size,instid,instrument);
-		
+
 		show("sendOrder: id="+id+" size="+size+" instrument="+INSTRUMENTS[instid].toString());
 		OUT_QUEUE.put(id,nos);
 		if(omConn.isConnected()){
@@ -49,7 +49,8 @@ public class SampleClient extends Mock implements Client{
 	public void sendCancel(int idToCancel){
 		show("sendCancel: id="+idToCancel);
 		if(omConn.isConnected()){
-			//OMconnection.sendMessage("cancel",idToCancel);
+//			OMconnection.sendMessage("cancel",idToCancel);
+//			omConn.sendMessage("cancel",idToCancel);
 		}
 	}
 
@@ -88,24 +89,30 @@ public class SampleClient extends Mock implements Client{
 					for(int i=0;i<fixTags.length;i++){
 						String[] tag_value=fixTags[i].split("=");
 						switch(tag_value[0]){
-							case"11":OrderId=Integer.parseInt(tag_value[1]);break;
-							case"35":MsgType=tag_value[1].charAt(0);
+							case"11":
+								OrderId=Integer.parseInt(tag_value[1]);
+								System.out.println("tag");
+								break;
+							case"35":
+								MsgType=tag_value[1].charAt(0);
 								if(MsgType=='A')whatToDo=methods.newOrderSingleAcknowledgement;
 								break;
-							case"39":OrdStatus=tag_value[1].charAt(0);break;
+							case"39":
+								OrdStatus=tag_value[1].charAt(0);
+								break;
 						}
 					}
 					switch(whatToDo){
 						case newOrderSingleAcknowledgement:newOrderSingleAcknowledgement(OrderId);
 					}
 					
-					/*message=connection.getMessage();
-					char type;
-					switch(type){
-						case 'C':cancelled(message);break;
-						case 'P':partialFill(message);break;
-						case 'F':fullyFilled(message);
-					}*/
+//					message=connection.getMessage();
+//					char type;
+//					switch(type){
+//						case 'C':cancelled(message);break;
+//						case 'P':partialFill(message);break;
+//						case 'F':fullyFilled(message);
+//					}
 					show("");
 				}
 			}

@@ -1,8 +1,8 @@
 package TradeScreen;
 
-import java.io.IOException;
-
 import OrderManager.Order;
+
+import java.io.IOException;
 
 public interface TradeScreen {
 	public enum api{newOrder,price,fill,cross};
