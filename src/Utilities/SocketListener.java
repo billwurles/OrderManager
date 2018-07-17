@@ -12,7 +12,7 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.logging.Logger;
 
-public class SocketListener {
+class SocketListener {
 
     private SocketChannel channel;
     private ServerSocketChannel server;
@@ -24,15 +24,19 @@ public class SocketListener {
     private ByteBuffer buffer;
     private Map<SocketChannel, List> dataMap;
 
+    private byte[] response;
+    private boolean hasResponse;
+
     Logger logger;
 
     public SocketListener(InetSocketAddress location) throws InterruptedException {
         this.address=location;
         logger= Logger.getLogger(SocketConnection.class.getName());
         dataMap = new HashMap<>();
+        hasResponse=false;
     }
 
-    public String listenForMessage() throws IOException {
+    public void listenForMessage() throws IOException {
         System.err.printf("%s attempting connection to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
         this.selector = Selector.open();
         server = ServerSocketChannel.open();
@@ -77,7 +81,7 @@ public class SocketListener {
         channel.register(selector, SelectionKey.OP_READ);
     }
 
-    private byte[] read(SelectionKey key) throws IOException{
+    private void read(SelectionKey key) throws IOException{
         channel = (SocketChannel) key.channel();
         buffer = ByteBuffer.allocate(2048);
         int numRead = -1;
@@ -90,12 +94,18 @@ public class SocketListener {
             System.err.printf("Conn. %s closed by %s\n",Thread.currentThread().getName(),sockAddr);
             channel.close();
             key.cancel();
-            return new byte[]{};
         }
 
         String data = new String(buffer.array());
         System.out.printf("Conn. %s recieved data from %s:%s \n\n%s\n\n",Thread.currentThread().getName(),address.getHostName(),address.getPort(),data);
 
-        return buffer.array();
+        response = buffer.array();
+        hasResponse=true;
+    }
+
+    public byte[] getResponse() { return response; }
+
+    public boolean hasResponse() {
+        return hasResponse;
     }
 }

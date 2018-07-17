@@ -13,10 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Created by alumniCurie16 on 17/07/2018.
- */
-public class SocketMessenger {
+class SocketMessenger {
 
     private SocketChannel channel;
     private InetSocketAddress address;
