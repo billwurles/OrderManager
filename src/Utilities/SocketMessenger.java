@@ -26,7 +26,7 @@ public class SocketMessenger {
 
     Logger logger;
 
-    public SocketMessager(InetSocketAddress location) throws InterruptedException {
+    public SocketMessenger(InetSocketAddress location) throws InterruptedException {
         System.err.printf("%s attempting connection to %s:%s\n",Thread.currentThread().getName(),location.getHostName(),location.getPort());
         this.address=location;
         int tryCounter = 0;
