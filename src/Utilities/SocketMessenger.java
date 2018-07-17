@@ -16,17 +16,18 @@ import java.util.logging.Logger;
 /**
  * Created by alumniCurie16 on 17/07/2018.
  */
-public class SocketMessager {
+public class SocketMessenger {
 
     private SocketChannel channel;
     private InetSocketAddress address;
+
 
     private ByteBuffer buffer;
     private boolean connected;
 
     Logger logger;
 
-    public SocketMessager(InetSocketAddress location) throws InterruptedException {
+    public SocketMessenger(InetSocketAddress location) throws InterruptedException {
         System.err.printf("%s attempting connection to %s:%s\n",Thread.currentThread().getName(),location.getHostName(),location.getPort());
         this.address=location;
         int tryCounter = 0;
@@ -45,8 +46,7 @@ public class SocketMessager {
         }
     }
 
-    public void sendMessage(String message) throws IOException {
-        byte[] data = message.getBytes();
+    public void sendMessage(byte[] data) throws IOException {
         buffer = ByteBuffer.wrap(data);
         channel.write(buffer);
         System.err.printf("Conn. %s sent data to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
