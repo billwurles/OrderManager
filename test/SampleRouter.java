@@ -50,7 +50,7 @@ public class SampleRouter extends Thread implements Router {
 
     @Override
     public void routeOrder(long id, int sliceId, int size, Instrument i) throws IOException { //MockI.show(""+order);
-        int fillSize = RANDOM_NUM_GENERATOR.nextInt(size);
+        int fillSize = RANDOM_NUM_GENERATOR.nextInt(size+1);
         System.err.println(currentThread().getName() + ", filled " + fillSize);
         //TODO have this similar to the market price of the instrument
         double fillPrice = 199 * RANDOM_NUM_GENERATOR.nextDouble();

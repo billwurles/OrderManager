@@ -14,7 +14,7 @@ public class Order implements Serializable {
     private Instrument instrument;
     private int size;
     private short orderRouter;
-    private int clientOrderID; //TODO refactor to lowercase C
+    private int clientOrderID;
     private Order parentOrder = null;
     double[] bestPrices;
     int bestPriceCount;
@@ -54,7 +54,6 @@ public class Order implements Serializable {
 
     //Status state;
     float price() {
-        //TODO this is buggy as it doesn't take account of slices. Let them fix it
         float sum = 0;
         for (Fill fill : fills) {
             sum += fill.price;
@@ -151,18 +150,11 @@ public class Order implements Serializable {
     }*/
 
     public Order(int clientID, int side, Instrument instrument, int size, int clientOrderID) {
-        this(idCounter.getAndIncrement(), clientID, side, instrument, size, clientOrderID);
+        this(idCounter.getAndIncrement(), clientID, side, instrument, size, clientOrderID,null);
     }
 
     public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID) {
-        this.id = id;
-        this.clientID = clientID;
-        this.side = side;
-        this.instrument = instrument;
-        this.size = size;
-        this.clientOrderID = clientOrderID;
-        fills = new ArrayList<>();
-        slices = new ArrayList<>();
+        this(id, clientID, side, instrument, size, clientOrderID,null);
     }
 
     public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID, Order parentOrder) {
