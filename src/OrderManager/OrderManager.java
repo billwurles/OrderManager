@@ -17,7 +17,7 @@ public class OrderManager {
     private static LiveMarketData liveMarketData;
     private HashMap<Long, Order> orders = new HashMap<>(); //debugger will do this line as it gives state to the object
     //currently recording the number of new order messages we get. TODO why? use it for more?
-    private long id;
+    //private long id;
     private Socket[] orderRouters;
     private Socket[] clients;
     private Socket trader;
@@ -60,6 +60,8 @@ public class OrderManager {
         }
     }
 
+    int cyclenum = 0;
+
     public void mainLoop() throws IOException, ClassNotFoundException, InterruptedException {
         boolean stillalive = true;
         while (stillalive) {
@@ -68,6 +70,9 @@ public class OrderManager {
             pollClients();
             pollRouters();
             pollTraders();
+            if (cyclenum % 500 == 0)
+                routeUnfilledOrders();
+            ++cyclenum;
             Thread.sleep(0, 20);
         }
     }
@@ -136,22 +141,30 @@ public class OrderManager {
         }
     }
 
-    void routeUnfilledOrders() {
-
+    void routeUnfilledOrders() throws IOException {
+        for (Order order : orders.values())
+        {
+            if (order.sizeRemaining() == 0) continue;
+            for (int i = 0; i < order.slices.size(); ++i)
+            {
+                if (order.slices.get(i).sizeRemaining() < 0) continue;
+                routeOrder(order.getId(),i,order.slices.get(i).sizeRemaining(),order.slices.get(i));
+            }
+        }
     }
 
     private void newOrder(int clientID, int clientOrderId, NewOrderSingle nos) throws IOException {
-        orders.put(id, new Order(id, clientID, nos.getSide(), nos.getInstrument(), nos.getSize(), clientOrderId));
+        Order order = new Order(clientID, nos.getSide(), nos.getInstrument(), nos.getSize(), clientOrderId);
+        orders.put(order.getId(), order);
         //send a message to the client with 39=A; //OrdStatus is Fix 39, 'A' is 'Pending New'
         ObjectOutputStream os = new ObjectOutputStream(clients[clientID].getOutputStream());
 
         //ClOrdId is 11=
         os.writeObject("11=" + clientOrderId + ";35=A;39=A;"); //FIXME (Kel): Should this be an *object* output steam?
         os.flush();
-        sendOrderToTrader(orders.get(id), TradeScreen.api.newOrder);
+        sendOrderToTrader(order, TradeScreen.api.newOrder);
         //send the new order to the trading screen
         //don't do anything else with the order, as we are simulating high touch orders and so need to wait for the trader to accept the order
-        id++;
     }
 
     private void sendOrderToTrader(Order o, Object method) throws IOException {
