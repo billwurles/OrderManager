@@ -56,7 +56,7 @@ public class TraderMessenger {
         output.flush();
         messenger.sendMessage(baos.toByteArray());
     }
-    
+
     public TraderResponse receiveResponse() throws IOException, ClassNotFoundException {
         listener.listenForMessage();
 
@@ -69,7 +69,7 @@ public class TraderMessenger {
         } else {
             //TODO (Will) THROW SOME EXCEPTION
         }
-        return new TraderResponse(null, Integer.MIN_VALUE, null);
+        return new TraderResponse(null, Integer.MIN_VALUE, null);//FIXME This could cause issues
     }
 
     public void sendCancel(int id){

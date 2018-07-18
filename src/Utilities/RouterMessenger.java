@@ -76,7 +76,7 @@ public class RouterMessenger {
         } else {
             //TODO (Will) THROW SOME EXCEPTION
         }
-        return new RouterResponse(null,min,min,min,min,null); //TODO something better than this
+        return new RouterResponse(null,min,min,min,min,null); //FIXME This could cause issues (null values)
     }
 
     public void sendCancel(int id){
@@ -86,7 +86,7 @@ public class RouterMessenger {
     public class RouterResponse {
         public final Router.api methodName;
         public final int id, sliceID, price, fillSize;
-        final Instrument instrument;
+        public final Instrument instrument;
 
         public RouterResponse(Router.api methodName, int id, int sliceID, int price, int fillSize,Instrument instrument) {
             this.methodName = methodName;

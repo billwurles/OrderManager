@@ -21,6 +21,7 @@ public class ClientMessenger {
     public void sendMessage(int id, NewOrderSingle nos) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
+        output.writeObject("newOrderSingle");
         output.writeInt(id);
         output.writeObject(nos);
         output.flush();

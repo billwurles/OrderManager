@@ -12,7 +12,7 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.logging.Logger;
 
-class SocketListener {
+public class SocketListener {
 
     private SocketChannel channel;
     private ServerSocketChannel server;
@@ -44,6 +44,7 @@ class SocketListener {
 
         server.socket().bind(address);
         server.register(selector, SelectionKey.OP_ACCEPT);
+
 
         while(true){
             System.err.printf("Conn. %s listening on %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
