@@ -40,9 +40,9 @@ public class Order implements Serializable {
         for (Fill f : fills) { //TODO (Kel): Really? Scan through every fill every time?
             filledSoFar += f.size;
         }
-        for (Order c : slices) {
+        /*for (Order c : slices) {
             filledSoFar += c.sizeFilled();
-        }
+        }*/
         return filledSoFar;
     }
 
@@ -61,13 +61,15 @@ public class Order implements Serializable {
         return sum / fills.size();
     }
 
-    void createFill(int size, double price) {
-        fills.add(new Fill(size, price));
+    Fill createFill(int size, double price) {
+        Fill newFill = new Fill(size, price);
+        fills.add(newFill);
         if (sizeRemaining() == 0) {
             OrdStatus = '2';
         } else {
             OrdStatus = '1';
         }
+        return newFill;
     }
 
     void cross(Order matchingOrder) {
