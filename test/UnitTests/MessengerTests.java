@@ -1,0 +1,7 @@
+package UnitTests;
+
+/**
+ * Created by alumniCurie16 on 18/07/2018.
+ */
+public class MessengerTests {
+}

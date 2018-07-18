@@ -13,10 +13,8 @@ public class Order implements Serializable {
     double[] bestPrices;
     int bestPriceCount;
 
-
-    public int getId() {
-        return id;
-    }
+    public int getId() {return id; }
+    public int getSize() {return size;}
 
     public int sliceSizes() {
         int totalSizeOfSlices = 0;
