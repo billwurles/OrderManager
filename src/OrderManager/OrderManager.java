@@ -218,18 +218,7 @@ public class OrderManager {
 
     private void newFill(long id, int sliceId, int size, double price) throws IOException {
         Order o = orders.get(id);
-        //This is horrible practice, what we're doing here is ensuring that a new fill for a slice
-        //is also present on the parent, moreover we're ensuring that we can later find out which slices fills
-        //came from by comparing the unique ID of the fills. This should happen automatically in the createFill
-        //method, though this would require changing the syntax of cr
         o.slices.get(sliceId).createFill(size, price);
-        if (o.sizeRemaining() > 0)
-            o.setOrdStatus('1');
-        else
-            o.setOrdStatus('2');
-        if (o.sizeRemaining() == 0) {
-            Database.write(o);
-        }
         System.out.println("Order " + id + " size = " + o.getSize() + " size filled = " + o.sizeFilled());
         sendOrderToTrader(o, TradeScreen.api.fill);
     }
