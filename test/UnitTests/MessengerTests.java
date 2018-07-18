@@ -19,7 +19,7 @@ public class MessengerTests {
 
     final InetSocketAddress address = new InetSocketAddress("localhost",2020);
     final int id = 123;
-    final NewOrderSingle nos = new NewOrderSingle(4321,765,new Instrument(new Ric("myric.L")));
+    final NewOrderSingle nos = new NewOrderSingle(1,4321,765,new Instrument(new Ric("myric.L")));
 
     @Before
     public void setUpTest(){
@@ -40,7 +40,7 @@ public class MessengerTests {
                         OrderManagerMessenger omMessenger = new OrderManagerMessenger(address);
                         OrderManagerMessenger.ClientMessage message = omMessenger.receiveClientMessage();
                         assert(message.id == id);
-                        assert(nos.instrument.equals(message.order.instrument));
+                        assert(nos.getInstrument().equals(message.order.getInstrument()));
                     } catch (InterruptedException | IOException | ClassNotFoundException e) {
                         e.printStackTrace();
                     }
