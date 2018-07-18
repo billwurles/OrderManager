@@ -18,6 +18,8 @@ public class TraderMessenger {
     ObjectInputStream input;
 
     public TraderMessenger(InetSocketAddress address) throws InterruptedException, IOException {
+        System.err.println("TraderMess start");
+        listener = new SocketListener(address);
         messenger = new SocketMessenger(address);
     }
 
@@ -64,12 +66,12 @@ public class TraderMessenger {
             byte[] response = listener.getResponse();
             input = new ObjectInputStream(new ByteArrayInputStream(response));
 
-            return new TraderResponse((TradeScreen.api) input.readObject(), input.readInt(), (Order) input.readObject());
+            return new TraderResponse((TradeScreen.api) input.readObject(), (Order) input.readObject());
 
         } else {
             //TODO (Will) THROW SOME EXCEPTION
         }
-        return new TraderResponse(null, Integer.MIN_VALUE, null);//FIXME This could cause issues
+        return new TraderResponse(null, null);//FIXME This could cause issues
     }
 
     public void sendCancel(int id){
@@ -78,12 +80,10 @@ public class TraderMessenger {
 
     public class TraderResponse {
         public final TradeScreen.api method;
-        public final int id;
         public final Order order;
 
-        public TraderResponse(TradeScreen.api method, int id, Order order) {
+        public TraderResponse(TradeScreen.api method, Order order) {
             this.method = method;
-            this.id = id;
             this.order = order;
         }
     }

@@ -51,3 +51,10 @@ public class SocketMessenger {
         //sleep(5000);
     }
 }
+
+
+/*
+biggest failure
+biggest success
+if you had unlimited resources and money what would you build
+ */

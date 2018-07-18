@@ -29,8 +29,9 @@ public class SocketListener {
 
     Logger logger;
 
-    public SocketListener(InetSocketAddress location) throws InterruptedException {
-        this.address=location;
+    public SocketListener(InetSocketAddress address) throws InterruptedException {
+        System.err.printf("%s listener starting connection to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
+        this.address=address;
         logger= Logger.getLogger(SocketConnection.class.getName());
         dataMap = new HashMap<>();
         hasResponse=false;
