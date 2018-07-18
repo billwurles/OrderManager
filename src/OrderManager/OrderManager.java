@@ -223,7 +223,6 @@ public class OrderManager {
         //came from by comparing the unique ID of the fills. This should happen automatically in the createFill
         //method, though this would require changing the syntax of cr
         o.slices.get(sliceId).createFill(size, price);
-        o.createFill(size, price);
         if (o.sizeRemaining() > 0)
             o.setOrdStatus('1');
         else
