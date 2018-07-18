@@ -25,6 +25,7 @@ public class SampleClient extends Mock implements Client {
         System.out.println("OM connected to client port " + port);
     }
 
+
     @Override
     public int sendOrder(Object par0) throws IOException {
         NewOrderSingle newOrder = (NewOrderSingle) par0;

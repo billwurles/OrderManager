@@ -65,7 +65,7 @@ public class SampleRouter extends Thread implements Router {
     }
 
     @Override
-    public void sendCancel(long id, int sliceId, int size, Instrument i) { //MockI.show(""+order);
+    public void sendCancel(long id, int sliceId, int size, Instrument i ) { //MockI.show(""+order);
     }
 
     @Override

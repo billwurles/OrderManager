@@ -1,9 +1,9 @@
-package Utilities;
+package Utilities.Messengers;
 
 import OrderManager.Order;
-import OrderRouter.Router;
-import Ref.Instrument;
 import TradeScreen.TradeScreen;
+import Utilities.SocketConnectors.SocketListener;
+import Utilities.SocketConnectors.SocketMessenger;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -11,15 +11,12 @@ import java.net.InetSocketAddress;
 public class TraderMessenger {
 
     SocketMessenger messenger;
-    SocketListener listener;
 
     ByteArrayOutputStream baos;
     ObjectOutputStream output;
-    ObjectInputStream input;
 
     public TraderMessenger(InetSocketAddress address) throws InterruptedException, IOException {
-        System.err.println("TraderMess start");
-        listener = new SocketListener(address);
+        System.err.println("TraderMessenger starting");
         messenger = new SocketMessenger(address);
     }
 
@@ -59,32 +56,9 @@ public class TraderMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
-    public TraderResponse receiveResponse() throws IOException, ClassNotFoundException {
-        listener.listenForMessage();
-
-        if(listener.hasResponse()) {
-            byte[] response = listener.getResponse();
-            input = new ObjectInputStream(new ByteArrayInputStream(response));
-
-            return new TraderResponse((TradeScreen.api) input.readObject(), (Order) input.readObject());
-
-        } else {
-            //TODO (Will) THROW SOME EXCEPTION
-        }
-        return new TraderResponse(null, null);//FIXME This could cause issues
-    }
-
     public void sendCancel(int id){
 
     }
 
-    public class TraderResponse {
-        public final TradeScreen.api method;
-        public final Order order;
 
-        public TraderResponse(TradeScreen.api method, Order order) {
-            this.method = method;
-            this.order = order;
-        }
-    }
 }

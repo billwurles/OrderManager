@@ -4,6 +4,8 @@ import OrderClient.NewOrderSingle;
 import OrderManager.Order;
 import OrderRouter.Router;
 import Ref.Instrument;
+import Utilities.SocketConnectors.SocketListener;
+import Utilities.SocketConnectors.SocketMessenger;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -30,12 +32,11 @@ public class OrderManagerMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
-    public void sendOrderToTrader(int id, Order order, Object method) throws IOException {
+    public void sendOrderToTrader(Order order, Object method) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
         output.writeObject(method);
-        output.writeInt(id);
         output.writeObject(order);
 
         output.flush();

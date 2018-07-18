@@ -1,6 +1,4 @@
-package Utilities;
-
-import sun.util.logging.PlatformLogger;
+package Utilities.SocketConnectors;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -122,7 +120,7 @@ public class SocketConnection {
         }
 
         String data = new String(buffer.array());
-        System.out.printf("Conn. %s recieved data from %s:%s \n\n%s\n\n",Thread.currentThread().getName(),address.getHostName(),address.getPort(),data);
+        System.err.printf("Conn. %s recieved data from %s:%s \n\n%s\n\n",Thread.currentThread().getName(),address.getHostName(),address.getPort(),data);
 
         return data;
     }

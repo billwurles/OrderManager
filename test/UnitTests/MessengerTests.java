@@ -5,8 +5,8 @@ import Ref.Instrument;
 import Ref.Ric;
 import Utilities.ClientMessenger;
 import Utilities.OrderManagerMessenger;
-import Utilities.SocketListener;
-import Utilities.SocketMessenger;
+import Utilities.SocketConnectors.SocketListener;
+import Utilities.SocketConnectors.SocketMessenger;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -117,9 +117,7 @@ public class MessengerTests {
                             System.out.println("Asserting "+result+" == "+theString);
                             //result = builder.toString();
                         }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
+                    } catch (InterruptedException | IOException e) {
                         e.printStackTrace();
                     }
                 }

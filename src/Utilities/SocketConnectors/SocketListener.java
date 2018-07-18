@@ -1,4 +1,4 @@
-package Utilities;
+package Utilities.SocketConnectors;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -62,10 +62,9 @@ public class SocketListener {
                 }
                 if(key.isReadable()){
                     read(key);
+                    return;
                 }
-
             }
-
             System.err.printf("Conn. %s recieved data from %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
         }
     }
@@ -99,7 +98,7 @@ public class SocketListener {
         }
 
         String data = new String(buffer.array());
-        System.out.printf("Conn. %s recieved data from %s:%s \n\n%s\n\n",Thread.currentThread().getName(),address.getHostName(),address.getPort(),data);
+        System.err.printf("Connection %s recieved data from %s:%s \n\n%s\n\n",Thread.currentThread().getName(),address.getHostName(),address.getPort(),data);
 
         response = buffer.array();
         hasResponse=true;

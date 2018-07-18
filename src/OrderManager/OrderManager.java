@@ -12,6 +12,7 @@ import LiveMarketData.LiveMarketData;
 import OrderClient.NewOrderSingle;
 import OrderRouter.Router;
 import TradeScreen.TradeScreen;
+import Utilities.OrderManagerMessenger;
 
 public class OrderManager {
     private static LiveMarketData liveMarketData;
@@ -21,6 +22,7 @@ public class OrderManager {
     private Socket[] orderRouters;
     private Socket[] clients;
     private Socket trader;
+    private OrderManagerMessenger messenger;
 
     private Socket connect(InetSocketAddress location) {
         boolean connected = false;
@@ -45,6 +47,12 @@ public class OrderManager {
         this.trader = connect(trader);
 
         this.orderRouters = new Socket[orderRouters.length];
+
+        try {
+            messenger = new OrderManagerMessenger(trader);
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+        }
 
         int i = 0; //need a counter for the the output array
         for (InetSocketAddress location : orderRouters) {
@@ -154,11 +162,12 @@ public class OrderManager {
         id++;
     }
 
-    private void sendOrderToTrader(Order o, Object method) throws IOException {
-        ObjectOutputStream ost = new ObjectOutputStream(trader.getOutputStream());
-        ost.writeObject(method);
-        ost.writeObject(o);
-        ost.flush();
+    private void sendOrderToTrader(Order order, Object method) throws IOException {
+//        ObjectOutputStream ost = new ObjectOutputStream(trader.getOutputStream());
+//        ost.writeObject(method);
+//        ost.writeObject(o);
+//        ost.flush();
+        messenger.sendOrderToTrader(order, method);
     }
 
 //    private void sendOrderToTrader(long id, Object method) throws IOException {
