@@ -2,19 +2,20 @@ package OrderManager;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 import Ref.Instrument;
 
 public class Order implements Serializable {
     private long id; //TODO these should all be longs
-    private static long idCounter;
+    private static AtomicLong idCounter = new AtomicLong(0);
     private int clientID;
     private int side;
     private Instrument instrument;
     private int size;
     private short orderRouter;
     private int clientOrderID; //TODO refactor to lowercase C
-
+    private Order parentOrder = null;
     double[] bestPrices;
     int bestPriceCount;
 
@@ -31,7 +32,7 @@ public class Order implements Serializable {
     }
 
     public int newSlice(int sliceSize) {
-        slices.add(new Order(id, clientID, side, instrument, sliceSize, clientOrderID));
+        slices.add(new Order(id, clientID, side, instrument, sliceSize, clientOrderID, this));
         return slices.size() - 1;
     }
 
@@ -63,11 +64,17 @@ public class Order implements Serializable {
 
     Fill createFill(int size, double price) {
         Fill newFill = new Fill(size, price);
+        parentOrder.fills.add(newFill);
         fills.add(newFill);
         if (sizeRemaining() == 0) {
             OrdStatus = '2';
         } else {
             OrdStatus = '1';
+        }
+        if (parentOrder.sizeRemaining() == 0) {
+            parentOrder.OrdStatus = '2';
+        } else {
+            parentOrder.OrdStatus = '1';
         }
         return newFill;
     }
@@ -137,7 +144,7 @@ public class Order implements Serializable {
     }*/
 
     public Order(int clientID, int side, Instrument instrument, int size, int clientOrderID) {
-        this(idCounter++, clientID, side, instrument, size, clientOrderID);
+        this(idCounter.getAndIncrement(), clientID, side, instrument, size, clientOrderID);
     }
 
     public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID) {
@@ -147,6 +154,18 @@ public class Order implements Serializable {
         this.instrument = instrument;
         this.size = size;
         this.clientOrderID = clientOrderID;
+        fills = new ArrayList<>();
+        slices = new ArrayList<>();
+    }
+
+    public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID, Order parentOrder) {
+        this.id = id;
+        this.clientID = clientID;
+        this.side = side;
+        this.instrument = instrument;
+        this.size = size;
+        this.clientOrderID = clientOrderID;
+        this.parentOrder = parentOrder;
         fills = new ArrayList<>();
         slices = new ArrayList<>();
     }
