@@ -103,6 +103,7 @@ public class OrderManager {
                     case "bestPrice":
                         long OrderId = is.readLong();
                         int SliceId = is.readInt();
+
                         Order slice = orders.get(OrderId).slices.get(SliceId);
                         slice.bestPrices[routerId] = is.readDouble();
                         slice.bestPriceCount++;

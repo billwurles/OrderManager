@@ -13,13 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-/**
- * Created by alumniCurie16 on 17/07/2018.
- */
 public class SocketMessenger {
 
     private SocketChannel channel;
     private InetSocketAddress address;
+
 
     private ByteBuffer buffer;
     private boolean connected;
@@ -45,8 +43,7 @@ public class SocketMessenger {
         }
     }
 
-    public void sendMessage(String message) throws IOException {
-        byte[] data = message.getBytes();
+    public void sendMessage(byte[] data) throws IOException {
         buffer = ByteBuffer.wrap(data);
         channel.write(buffer);
         System.err.printf("Conn. %s sent data to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
