@@ -7,11 +7,11 @@ import OrderManager.Order;
 public interface TradeScreen {
     enum api {newOrder, price, fill, cross}
 
-    void newOrder(int id, Order order) throws IOException;
+    void newOrder(Order order) throws IOException;
 
-    void acceptOrder(int id) throws IOException;
+    void acceptOrder(long id) throws IOException;
 
-    void sliceOrder(int id, int sliceSize) throws IOException;
+    void sliceOrder(long id, int sliceSize) throws IOException;
 
-    void price(int id, Order o) throws InterruptedException, IOException;
+    void price(Order o) throws InterruptedException, IOException;
 }

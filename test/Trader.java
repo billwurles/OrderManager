@@ -11,7 +11,7 @@ import OrderManager.Order;
 import TradeScreen.TradeScreen;
 
 public class Trader extends Thread implements TradeScreen {
-    private HashMap<Integer, Order> orders = new HashMap<>();
+    private HashMap<Long, Order> orders = new HashMap<>();
     private static Socket omConn;
     private int port;
 
@@ -36,17 +36,15 @@ public class Trader extends Thread implements TradeScreen {
                 System.out.println(Thread.currentThread().getName() + " calling: " + method);
                 switch (method) {
                     case newOrder:
-                        newOrder(is.readInt(), (Order) is.readObject());
+                        newOrder((Order) is.readObject());
                         break;
                     case price:
-                        price(is.readInt(), (Order) is.readObject());
+                        price((Order) is.readObject());
                         break;
                     case cross:
-                        is.readInt();
                         is.readObject();
                         break; //TODO
                     case fill:
-                        int i = is.readInt();
                         Object o = is.readObject();
                         break; //TODO
                 }
@@ -57,35 +55,35 @@ public class Trader extends Thread implements TradeScreen {
         }
     }
 
-    @Override
-    public void newOrder(int id, Order order) throws IOException {
+    //@Override
+    public void newOrder(Order order) throws IOException {
         //TODO the order should go in a visual grid, but not needed for test purposes
         //Thread.sleep(2134);
-        orders.put(id, order);
-        acceptOrder(id);
+        orders.put(order.getId(), order);
+        acceptOrder(order.getId());
     }
 
-    @Override
-    public void acceptOrder(int id) throws IOException {
+    //@Override
+    public void acceptOrder(long id) throws IOException {
         os = new ObjectOutputStream(omConn.getOutputStream());
         os.writeObject("acceptOrder");
-        os.writeInt(id);
+        os.writeLong(id);
         os.flush();
     }
 
     @Override
-    public void sliceOrder(int id, int sliceSize) throws IOException {
+    public void sliceOrder(long id, int sliceSize) throws IOException {
         os = new ObjectOutputStream(omConn.getOutputStream());
         os.writeObject("sliceOrder");
-        os.writeInt(id);
+        os.writeLong(id);
         os.writeInt(sliceSize);
         os.flush();
     }
 
     @Override
-    public void price(int id, Order o) throws IOException {
+    public void price(Order o) throws IOException {
         //TODO should update the trade screen
         //Thread.sleep(2134);
-        sliceOrder(id, orders.get(id).sizeRemaining() / 2); //FIXME (Kel): Are we sure that we don't get rounding errors? Can we error here and send bad results?
+        sliceOrder(o.getId(), o.sizeRemaining() / 2); //FIXME (Kel): Are we sure that we don't get rounding errors? Can we error here and send bad results?
     }
 }

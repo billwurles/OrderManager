@@ -6,15 +6,23 @@ import java.util.ArrayList;
 import Ref.Instrument;
 
 public class Order implements Serializable {
-    private int id; //TODO these should all be longs
-    short orderRouter;
-    public int ClientOrderID; //TODO refactor to lowercase C
+    private long id; //TODO these should all be longs
+    private static long idCounter;
+    private int clientID;
+    private int side;
+    private Instrument instrument;
     private int size;
+    private short orderRouter;
+    private int clientOrderID; //TODO refactor to lowercase C
+
     double[] bestPrices;
     int bestPriceCount;
 
-    public int getId() {return id; }
-    public int getSize() {return size;}
+    public double initialMarketPrice;
+    ArrayList<Order> slices;
+    private ArrayList<Fill> fills;
+    private char OrdStatus = 'A'; //OrdStatus is Fix 39, 'A' is 'Pending New'
+
 
     public int sliceSizes() {
         int totalSizeOfSlices = 0;
@@ -23,7 +31,7 @@ public class Order implements Serializable {
     }
 
     public int newSlice(int sliceSize) {
-        slices.add(new Order(id, ClientOrderID, instrument, sliceSize));
+        slices.add(new Order(id, clientID, side, instrument, sliceSize, clientOrderID));
         return slices.size() - 1;
     }
 
@@ -42,20 +50,6 @@ public class Order implements Serializable {
         return size - sizeFilled();
     }
 
-    int clientid;
-    public Instrument instrument;
-    public double initialMarketPrice;
-    ArrayList<Order> slices;
-    private ArrayList<Fill> fills;
-    private char OrdStatus = 'A'; //OrdStatus is Fix 39, 'A' is 'Pending New'
-
-    public char getOrdStatus() {
-        return OrdStatus;
-    }
-
-    public void setOrdStatus(char input) {
-        OrdStatus = input;
-    }
 
     //Status state;
     float price() {
@@ -140,13 +134,55 @@ public class Order implements Serializable {
         //state=cancelled
     }*/
 
-    public Order(int clientId, int ClientOrderID, Instrument instrument, int size) {
-        this.ClientOrderID = ClientOrderID;
-        this.size = size;
-        this.clientid = clientId;
+    public Order(int clientID, int side, Instrument instrument, int size, int clientOrderID) {
+        this(idCounter++, clientID, side, instrument, size, clientOrderID);
+    }
+
+    public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID) {
+        this.id = id;
+        this.clientID = clientID;
+        this.side = side;
         this.instrument = instrument;
+        this.size = size;
+        this.clientOrderID = clientOrderID;
         fills = new ArrayList<>();
         slices = new ArrayList<>();
+    }
+
+    public long getId() {
+        return this.id;
+    }
+
+    public int getClientID() {
+        return this.clientID;
+    }
+
+    public int getSide() {
+        return this.side;
+    }
+
+    public Instrument getInstrument() {
+        return this.instrument;
+    }
+
+    public String getInstrumentRIC() {
+        return this.instrument.toString();
+    }
+
+    public int getClientOrderID() {
+        return this.clientOrderID;
+    }
+
+    public int getSize() {
+        return this.size;
+    }
+
+    public char getOrdStatus() {
+        return this.OrdStatus;
+    }
+
+    public void setOrdStatus(char newStatus) {
+        this.OrdStatus = newStatus;
     }
 }
 
