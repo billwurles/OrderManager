@@ -15,7 +15,6 @@ import Ref.Ric;
 
 public class SampleClient extends Mock implements Client {
     private static final Random RANDOM_NUM_GENERATOR = new Random();
-    private static final Instrument[] INSTRUMENTS = {new Instrument(new Ric("VOD.L")), new Instrument(new Ric("BP.L")), new Instrument(new Ric("BT.L"))};
     private final HashMap<Integer,NewOrderSingle> OUT_QUEUE = new HashMap<>(); //queue for outgoing orders
     private static AtomicInteger id = new AtomicInteger(0); //message id number
     private Socket omConn; //connection to order manager
@@ -28,24 +27,20 @@ public class SampleClient extends Mock implements Client {
 
     @Override
     public int sendOrder(Object par0) throws IOException {
-        int id = SampleClient.id.getAndIncrement();
-        int size = RANDOM_NUM_GENERATOR.nextInt(5000);
-        int instid = RANDOM_NUM_GENERATOR.nextInt(3);
-        Instrument instrument = INSTRUMENTS[RANDOM_NUM_GENERATOR.nextInt(INSTRUMENTS.length)];
-        NewOrderSingle newOrderSingle = new NewOrderSingle(size, instid, instrument);
+        NewOrderSingle newOrder = (NewOrderSingle) par0;
 
-        show("sendOrder: id=" + id + " size=" + size + " instrument=" + INSTRUMENTS[instid].toString());
-        if (OUT_QUEUE.put(id, newOrderSingle) != null)
+        show("sendOrder: id=" + id + " size=" + newOrder.getSize() + " instrument=" + newOrder.getInstrument().toString());
+        if (OUT_QUEUE.put(id.get(), newOrder) != null)
             System.err.println("ERROR!?: Previous ID replaced");
         if (omConn.isConnected()) {
             ObjectOutputStream outputStream = new ObjectOutputStream(omConn.getOutputStream());
             outputStream.writeObject("newOrderSingle");
             //os.writeObject("35=D;");
-            outputStream.writeInt(id);
-            outputStream.writeObject(newOrderSingle);
+            outputStream.writeInt(id.get());
+            outputStream.writeObject(newOrder);
             outputStream.flush();
         }
-        return id;
+        return id.getAndIncrement();
     }
 
     @Override
@@ -66,13 +61,13 @@ public class SampleClient extends Mock implements Client {
     @Override
     public void fullyFilled(Order order) {
         show("" + order);
-        OUT_QUEUE.remove(order.ClientOrderID);
+        OUT_QUEUE.remove(order.getClientOrderID());
     }
 
     @Override
     public void cancelled(Order order) {
         show("" + order);
-        OUT_QUEUE.remove(order.ClientOrderID);
+        OUT_QUEUE.remove(order.getClientOrderID());
     }
 
     enum methods {newOrderSingleAcknowledgement, dontKnow}
