@@ -78,6 +78,7 @@ public class OrderManager {
             if (0 < client.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
                 ObjectInputStream is = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
                 String method = (String) is.readObject();
+                String[] methodsplit=method.split("=");
                 System.out.println(Thread.currentThread().getName() + " calling " + method);
                 switch (method) { //determine the type of message and process it
                     //call the newOrder message with the clientID and the message (clientMessageId,NewOrderSingle)
@@ -87,6 +88,13 @@ public class OrderManager {
                     default:
                         System.err.println("Unknown message type");
                         break;
+                }
+                if (methodsplit[0].equals("sendCancel")) {
+                    long orderID = Long.parseLong(methodsplit[1]);
+                    //	System.out.println(cancelRemainder(orderID));
+                    Order order = orders.get(orderID);
+
+                    cancelOrder(orderID,order);
                 }
             }
         }
@@ -132,6 +140,7 @@ public class OrderManager {
                 case "sliceOrder":
                     sliceOrder(is.readLong(), is.readInt());
                     break;
+                case "cancelOrder":cancelOrder(is.readLong(),(Order)is.readObject()); break;
             }
         }
     }
@@ -161,6 +170,13 @@ public class OrderManager {
         ost.flush();
     }
 
+    private void sendOrderToTrader(long id, Object method) throws IOException {
+        ObjectOutputStream ost = new ObjectOutputStream(trader.getOutputStream());
+        ost.writeObject(method);
+        ost.writeLong(id);
+        ost.flush();
+    }
+
 //    private void sendOrderToTrader(long id, Object method) throws IOException {
 //        ObjectOutputStream ost = new ObjectOutputStream(trader.getOutputStream());
 //        ost.writeObject(method);
@@ -170,18 +186,20 @@ public class OrderManager {
 
     public void acceptOrder(long id) throws IOException {
         Order o = orders.get(id);
-        if (o.getOrdStatus() != 'A') { //Pending New
-            System.out.println("error accepting order that has already been accepted");
-            return;
-        }
-        o.setOrdStatus('0'); //New
-        ObjectOutputStream os = new ObjectOutputStream(clients[o.getClientID()].getOutputStream());
-        //newOrderSingle acknowledgement
-        //ClOrdId is 11=
-        os.writeObject("11=" + o.getClientOrderID() + ";35=A;39=0");
-        os.flush();
+        if (o != null) {
+            if (o.getOrdStatus() != 'A') { //Pending New
+                System.out.println("error accepting order that has already been accepted");
+                return;
+            }
+            o.setOrdStatus('0'); //New
+            ObjectOutputStream os = new ObjectOutputStream(clients[o.getClientID()].getOutputStream());
+            //newOrderSingle acknowledgement
+            //ClOrdId is 11=
+            os.writeObject("11=" + o.getClientOrderID() + ";35=A;39=0");
+            os.flush();
 
-        price(id);
+            price(id);
+        }
     }
 
     public void sliceOrder(long id, int sliceSize) throws IOException {
@@ -266,4 +284,17 @@ public class OrderManager {
         liveMarketData.setPrice(orders.get(id));
         sendOrderToTrader(orders.get(id), TradeScreen.api.price);
     }
+    public void cancelOrder(long id, Order o) throws IOException {
+
+        o = orders.get(id);
+        // sendOrderToTrader(id,orders.get(id),TradeScreen.api.cancell);
+        sendOrderToTrader(id, TradeScreen.api.cancel);
+        orders.remove(id);
+        if (orders.get(id) == null) {
+            System.out.println("Order " + id + " has been cancelled");
+
+        } else{System.out.println("Order " + id + " has NOT been deleted");}
+
+    }
+
 }

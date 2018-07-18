@@ -42,16 +42,16 @@ public class SampleClient extends Mock implements Client {
         }
         return id.getAndIncrement();
     }
-
-    @Override
-    public void sendCancel(int idToCancel) throws IOException {
-        show("sendCancel: id=" + idToCancel);
-        if (omConn.isConnected()) {
-            ObjectOutputStream orderManagerStream = new ObjectOutputStream(omConn.getOutputStream());
-            orderManagerStream.writeObject("cancelOrder");
-            orderManagerStream.writeInt(idToCancel);
-        }
-    }
+//
+//    @Override
+//    public void sendCancel(int idToCancel) throws IOException {
+//        show("sendCancel: id=" + idToCancel);
+//        if (omConn.isConnected()) {
+//            ObjectOutputStream orderManagerStream = new ObjectOutputStream(omConn.getOutputStream());
+//            orderManagerStream.writeObject("cancelOrder");
+//            orderManagerStream.writeInt(idToCancel);
+//        }
+//    }
 
     @Override
     public void partialFill(Order order) {
@@ -68,6 +68,22 @@ public class SampleClient extends Mock implements Client {
     public void cancelled(Order order) {
         show("" + order);
         OUT_QUEUE.remove(order.getClientOrderID());
+    }
+
+    @Override
+    public void sendCancel(long idToCancel) {
+
+        if (omConn.isConnected()) {
+            try {
+                ObjectOutputStream os = new ObjectOutputStream(omConn.getOutputStream());
+                os.writeObject("sendCancel=" + idToCancel);
+                //os.writeObject("35=D;");
+                //show("sendCancel: id="+idToCancel);
+            } catch (IOException e) {
+
+                e.printStackTrace();
+            }
+        }
     }
 
     enum methods {newOrderSingleAcknowledgement, dontKnow}

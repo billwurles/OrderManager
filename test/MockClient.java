@@ -26,8 +26,9 @@ class MockClient extends Thread{
 			SampleClient client=new SampleClient(port);
 			//int numOrders = numberGenerator.nextInt(10);
 			for (int currentOrder = 0; currentOrder < 10; currentOrder++) {
-				client.sendOrder(newMessage(numberGenerator.nextInt(2), numberGenerator.nextInt(1000), numberGenerator.nextFloat() * 200, numberGenerator.nextInt(3)));
-//			if(port==2000){
+			int id = 	client.sendOrder(newMessage(numberGenerator.nextInt(2), numberGenerator.nextInt(1000), numberGenerator.nextFloat() * 200, numberGenerator.nextInt(3)));
+				client.sendCancel(id);
+				//			if(port==2000){
 //				int id=client.sendOrder(newMessage(numberGenerator.nextInt(2), numberGenerator.nextInt(1000), numberGenerator.nextFloat()*200, numberGenerator.nextInt(3)));
 //				//TODO client.sendCancel(id);200.0f
 //				client.messageHandler();

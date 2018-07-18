@@ -5,7 +5,7 @@ import java.io.IOException;
 import OrderManager.Order;
 
 public interface TradeScreen {
-    enum api {newOrder, price, fill, cross}
+    enum api {newOrder, price, fill, cross,cancel}
 
     void newOrder(Order order) throws IOException;
 
@@ -14,4 +14,5 @@ public interface TradeScreen {
     void sliceOrder(long id, int sliceSize) throws IOException;
 
     void price(Order o) throws InterruptedException, IOException;
+    void cancelOrderT(long id) throws IOException;
 }
