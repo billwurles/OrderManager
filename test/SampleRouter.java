@@ -35,10 +35,10 @@ public class SampleRouter extends Thread implements Router {
                 System.out.println("Order Router received method call for:" + methodName);
                 switch (methodName) {
                     case routeOrder:
-                        routeOrder(is.readInt(), is.readInt(), is.readInt(), (Instrument) is.readObject());
+                        routeOrder(is.readLong(), is.readInt(), is.readInt(), (Instrument) is.readObject());
                         break;
                     case priceAtSize:
-                        priceAtSize(is.readInt(), is.readInt(), (Instrument) is.readObject(), is.readInt());
+                        priceAtSize(is.readLong(), is.readInt(), (Instrument) is.readObject(), is.readInt());
                         break;
                 }
             }
@@ -49,7 +49,7 @@ public class SampleRouter extends Thread implements Router {
     }
 
     @Override
-    public void routeOrder(int id, int sliceId, int size, Instrument i) throws IOException { //MockI.show(""+order);
+    public void routeOrder(long id, int sliceId, int size, Instrument i) throws IOException { //MockI.show(""+order);
         int fillSize = RANDOM_NUM_GENERATOR.nextInt(size);
         System.err.println(currentThread().getName() + ", filled " + fillSize);
         //TODO have this similar to the market price of the instrument
@@ -57,7 +57,7 @@ public class SampleRouter extends Thread implements Router {
         //Thread.sleep(42);
         os = new ObjectOutputStream(omConn.getOutputStream());
         os.writeObject("newFill");
-        os.writeInt(id);
+        os.writeLong(id);
         os.writeInt(sliceId);
         os.writeInt(fillSize);
         os.writeDouble(fillPrice);
@@ -65,14 +65,14 @@ public class SampleRouter extends Thread implements Router {
     }
 
     @Override
-    public void sendCancel(int id, int sliceId, int size, Instrument i) { //MockI.show(""+order);
+    public void sendCancel(long id, int sliceId, int size, Instrument i) { //MockI.show(""+order);
     }
 
     @Override
-    public void priceAtSize(int id, int sliceId, Instrument i, int size) throws IOException {
+    public void priceAtSize(long id, int sliceId, Instrument i, int size) throws IOException {
         os = new ObjectOutputStream(omConn.getOutputStream());
         os.writeObject("bestPrice");
-        os.writeInt(id);
+        os.writeLong(id);
         os.writeInt(sliceId);
         os.writeDouble(199 * RANDOM_NUM_GENERATOR.nextDouble());
         os.flush();
