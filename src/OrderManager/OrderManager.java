@@ -135,6 +135,10 @@ public class OrderManager {
         }
     }
 
+    void routeUnfilledOrders() {
+
+    }
+
     private void newOrder(int clientID, int clientOrderId, NewOrderSingle nos) throws IOException {
         orders.put(id, new Order(id, clientID, nos.getSide(), nos.getInstrument(), nos.getSize(), clientOrderId));
         //send a message to the client with 39=A; //OrdStatus is Fix 39, 'A' is 'Pending New'
@@ -213,7 +217,16 @@ public class OrderManager {
 
     private void newFill(long id, int sliceId, int size, double price) throws IOException {
         Order o = orders.get(id);
+        //This is horrible practice, what we're doing here is ensuring that a new fill for a slice
+        //is also present on the parent, moreover we're ensuring that we can later find out which slices fills
+        //came from by comparing the unique ID of the fills. This should happen automatically in the createFill
+        //method, though this would require changing the syntax of cr
         o.slices.get(sliceId).createFill(size, price);
+        o.createFill(size, price);
+        if (o.sizeRemaining() > 0)
+            o.setOrdStatus('1');
+        else
+            o.setOrdStatus('2');
         if (o.sizeRemaining() == 0) {
             Database.write(o);
         }
