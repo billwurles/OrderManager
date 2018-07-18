@@ -14,8 +14,8 @@ public class Main {
         //(new MockClient("Client 2", 2001)).start();
 
         //start sample routers
-        (new SampleRouter("Router LSE", 2010)).start();
-        (new SampleRouter("Router BATE", 2011)).start();
+        (new SampleRouter("Router LSE","", 2010)).start();
+        (new SampleRouter("Router BATE","", 2011)).start();
 
         (new Trader("Trader James", 2020)).start();
         //start order manager
