@@ -12,7 +12,6 @@ import LiveMarketData.LiveMarketData;
 import OrderClient.NewOrderSingle;
 import OrderRouter.Router;
 import TradeScreen.TradeScreen;
-import Utilities.OrderManagerMessenger;
 
 public class OrderManager {
     private static LiveMarketData liveMarketData;
@@ -77,7 +76,7 @@ public class OrderManager {
         for (int clientID = 0; clientID < this.clients.length; clientID++) { //check if we have data on any of the sockets
             Socket client = this.clients[clientID];
             if (0 < client.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
-                ObjectInputStream iserjj = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
+                ObjectInputStream is = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
                 String method = (String) is.readObject();
                 System.out.println(Thread.currentThread().getName() + " calling " + method);
                 switch (method) { //determine the type of message and process it
