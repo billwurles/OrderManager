@@ -81,6 +81,12 @@ public class Order implements Serializable {
 
     void cross(Order matchingOrder) {
         //pair slices first and then parent
+
+        if (matchingOrder.slices.size() == 0)
+        {
+            matchingOrder.newSlice(matchingOrder.sizeRemaining());
+        }
+
         for (Order slice : slices) {
             if (slice.sizeRemaining() == 0) continue;
             //TODO could optimise this to not start at the beginning every time
@@ -111,7 +117,8 @@ public class Order implements Serializable {
             //no point continuing if we didn't fill this slice, as we must already have fully filled the matchingOrder
             if (slice.sizeRemaining() > 0) break;
         }
-        if (sizeRemaining() > 0) {
+
+        /*if (sizeRemaining() > 0) {
             for (Order matchingSlice : matchingOrder.slices) {
                 int msze = matchingSlice.sizeRemaining();
                 if (msze == 0) continue;
@@ -136,7 +143,7 @@ public class Order implements Serializable {
                     matchingOrder.createFill(mParent, initialMarketPrice);
                 }
             }
-        }
+        }*/
     }
 
     /*void cancel() {
