@@ -78,71 +78,25 @@ public class Order implements Serializable {
         return newFill;
     }
 
-    void cross(Order matchingOrder) {
+    void cross(int sliceID, Order matchingOrder) {
         //pair slices first and then parent
+        Order currentSlice = slices.get(sliceID);
+        int currentSliceRemaining = currentSlice.sizeRemaining();
 
-        if (matchingOrder.slices.size() == 0)
-        {
-            matchingOrder.newSlice(matchingOrder.sizeRemaining());
-        }
-
-        for (Order slice : slices) {
-            if (slice.sizeRemaining() == 0) continue;
-            //TODO could optimise this to not start at the beginning every time
+        if (currentSliceRemaining > 0 && matchingOrder.sizeRemaining() > 0) {
+            if (matchingOrder.slices.size() > currentSliceRemaining)
+                matchingOrder.newSlice(Math.min(currentSliceRemaining, matchingOrder.sizeRemaining()));
             for (Order matchingSlice : matchingOrder.slices) {
-                int msze = matchingSlice.sizeRemaining();
-                if (msze == 0) continue;
-                int sze = slice.sizeRemaining();
-                if (sze <= msze) {
-                    slice.createFill(sze, initialMarketPrice);
-                    matchingSlice.createFill(sze, initialMarketPrice);
-                    break;
-                }
-                //sze>msze
-                slice.createFill(msze, initialMarketPrice);
-                matchingSlice.createFill(msze, initialMarketPrice);
-            }
-            int sze = slice.sizeRemaining();
-            int mParent = matchingOrder.sizeRemaining() - matchingOrder.sliceSizes();
-            if (sze > 0 && mParent > 0) {
-                if (sze >= mParent) {
-                    slice.createFill(sze, initialMarketPrice);
-                    matchingOrder.createFill(sze, initialMarketPrice);
-                } else {
-                    slice.createFill(mParent, initialMarketPrice);
-                    matchingOrder.createFill(mParent, initialMarketPrice);
+                int matchingSliceRemaining = matchingSlice.sizeRemaining();
+                if (matchingSliceRemaining > 0) {
+                    int amountToFill = Math.min(currentSliceRemaining, matchingSliceRemaining);
+                    currentSlice.createFill(amountToFill, initialMarketPrice);
+                    matchingSlice.createFill(amountToFill, initialMarketPrice);
+                    if (currentSlice.sizeRemaining() == 0 || matchingOrder.sizeRemaining() == 0)
+                        break;
                 }
             }
-            //no point continuing if we didn't fill this slice, as we must already have fully filled the matchingOrder
-            if (slice.sizeRemaining() > 0) break;
         }
-
-        /*if (sizeRemaining() > 0) {
-            for (Order matchingSlice : matchingOrder.slices) {
-                int msze = matchingSlice.sizeRemaining();
-                if (msze == 0) continue;
-                int sze = sizeRemaining();
-                if (sze <= msze) {
-                    createFill(sze, initialMarketPrice);
-                    matchingSlice.createFill(sze, initialMarketPrice);
-                    break;
-                }
-                //sze>msze
-                createFill(msze, initialMarketPrice);
-                matchingSlice.createFill(msze, initialMarketPrice);
-            }
-            int sze = sizeRemaining();
-            int mParent = matchingOrder.sizeRemaining() - matchingOrder.sliceSizes();
-            if (sze > 0 && mParent > 0) {
-                if (sze >= mParent) {
-                    createFill(sze, initialMarketPrice);
-                    matchingOrder.createFill(sze, initialMarketPrice);
-                } else {
-                    createFill(mParent, initialMarketPrice);
-                    matchingOrder.createFill(mParent, initialMarketPrice);
-                }
-            }
-        }*/
     }
 
     /*void cancel() {

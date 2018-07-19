@@ -47,6 +47,9 @@ public class Trader extends Thread implements TradeScreen {
                     case fill:
                         Object o = is.readObject();
                         break; //TODO
+                    case cancel:
+                        System.out.println(Thread.currentThread().getName() + " calling " + method);
+
                 }
             }
         } catch (IOException | ClassNotFoundException e) {

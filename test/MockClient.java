@@ -1,8 +1,10 @@
 import OrderClient.NewOrderSingle;
+import OrderManager.Order;
 import Ref.Instrument;
 import Ref.Ric;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
 class MockClient extends Thread{
@@ -24,18 +26,13 @@ class MockClient extends Thread{
 	public void run(){
 		try {
 			SampleClient client=new SampleClient(port);
-			//int numOrders = numberGenerator.nextInt(10);
-			for (int currentOrder = 0; currentOrder < 10; currentOrder++) {
-				client.sendOrder(newMessage(numberGenerator.nextInt(2), numberGenerator.nextInt(1000), numberGenerator.nextFloat() * 200, numberGenerator.nextInt(3)));
-//			if(port==2000){
-//				int id=client.sendOrder(newMessage(numberGenerator.nextInt(2), numberGenerator.nextInt(1000), numberGenerator.nextFloat()*200, numberGenerator.nextInt(3)));
-//				//TODO client.sendCancel(id);200.0f
-//				client.messageHandler();
-//			}else{
-//				client.sendOrder(null);
-//				client.messageHandler();
+			if (port == 2000)
+				client.sendOrder(newMessage(1, 100, 100.0f, 0));
+			else
+				client.sendOrder(newMessage(2, 100, 100.0f, 0));
+//			for (int currentOrder = 0; currentOrder < 10; currentOrder++) {
+//				client.sendOrder(newMessage(numberGenerator.nextInt(2), numberGenerator.nextInt(1000), numberGenerator.nextFloat() * 200, numberGenerator.nextInt(3)));
 //			}
-			}
 			client.messageHandler();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
