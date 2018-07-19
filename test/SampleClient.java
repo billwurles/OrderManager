@@ -4,7 +4,9 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import OrderClient.Client;
 import OrderClient.NewOrderSingle;
 import OrderManager.Order;
@@ -14,6 +16,7 @@ import java.util.logging.Level;
 
 
 public class SampleClient extends Mock implements Client {
+    private static final Random RANDOM_NUM_GENERATOR = new Random();
     private final HashMap<Integer,NewOrderSingle> OUT_QUEUE = new HashMap<>(); //queue for outgoing orders
     private static AtomicInteger id = new AtomicInteger(0); //message id number
     private Socket omConn; //connection to order manager
@@ -47,6 +50,7 @@ public class SampleClient extends Mock implements Client {
         if (omConn.isConnected()) {
             ObjectOutputStream outputStream = new ObjectOutputStream(omConn.getOutputStream());
             outputStream.writeObject("newOrderSingle");
+            //os.writeObject("35=D;");
             outputStream.writeInt(id.get());
             outputStream.writeObject(newOrder);
             outputStream.flush();
@@ -66,6 +70,7 @@ public class SampleClient extends Mock implements Client {
             ObjectOutputStream orderManagerStream = new ObjectOutputStream(omConn.getOutputStream());
             orderManagerStream.writeObject("cancelOrder="+idToCancel);
             orderManagerStream.writeLong(idToCancel);
+            orderManagerStream.flush();
         }
     }
 
@@ -115,6 +120,7 @@ public class SampleClient extends Mock implements Client {
         ObjectInputStream is;
         try {
             while (true) {
+                //is.wait(); //this throws an exception!!
                 is = new ObjectInputStream(omConn.getInputStream());
                 String fix = (String) is.readObject();
                 System.out.println(Thread.currentThread().getName() + " received fix message: " + fix);

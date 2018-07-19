@@ -13,8 +13,10 @@ public class Order implements Serializable {
     private int side;
     private Instrument instrument;
     private int size;
+    private short orderRouter;
     private int clientOrderID;
     private Order parentOrder = null;
+    private volatile boolean outAtRouter;
     double[] bestPrices;
     int bestPriceCount;
 
@@ -105,43 +107,25 @@ public class Order implements Serializable {
      *
      * @param matchingOrder
      */
-    void cross(Order matchingOrder) {
+    void cross(int sliceID, Order matchingOrder) {
         //pair slices first and then parent
+        Order currentSlice = slices.get(sliceID);
+        int currentSliceRemaining = currentSlice.sizeRemaining();
 
-        if (matchingOrder.slices.size() == 0)
-        {
-            matchingOrder.newSlice(matchingOrder.sizeRemaining());
-        }
-
-        for (Order slice : slices) {
-            if (slice.sizeRemaining() == 0) continue;
-            //TODO could optimise this to not start at the beginning every time
-            for (Order matchingSlice : matchingOrder.slices) {
-                int msze = matchingSlice.sizeRemaining();
-                if (msze == 0) continue;
-                int sze = slice.sizeRemaining();
-                if (sze <= msze) {
-                    slice.createFill(sze, initialMarketPrice);
-                    matchingSlice.createFill(sze, initialMarketPrice);
-                    break;
-                }
-                //sze>msze
-                slice.createFill(msze, initialMarketPrice);
-                matchingSlice.createFill(msze, initialMarketPrice);
-            }
-            int sze = slice.sizeRemaining();
-            int mParent = matchingOrder.sizeRemaining() - matchingOrder.sliceSizes();
-            if (sze > 0 && mParent > 0) {
-                if (sze >= mParent) {
-                    slice.createFill(sze, initialMarketPrice);
-                    matchingOrder.createFill(sze, initialMarketPrice);
-                } else {
-                    slice.createFill(mParent, initialMarketPrice);
-                    matchingOrder.createFill(mParent, initialMarketPrice);
+        if (currentSliceRemaining > 0 && matchingOrder.sizeRemaining() > 0) {
+            if (matchingOrder.slices.size() > 0) {
+                for (Order matchingSlice : matchingOrder.slices) {
+                    int matchingSliceRemaining = matchingSlice.sizeRemaining();
+                    if (matchingSliceRemaining > 0) {
+                        int amountToFill = Math.min(currentSliceRemaining, matchingSliceRemaining);
+                        currentSlice.createFill(amountToFill, initialMarketPrice);
+                        matchingSlice.createFill(amountToFill, initialMarketPrice);
+                        currentSliceRemaining = currentSlice.sizeRemaining();
+                        if (currentSliceRemaining == 0 || matchingOrder.sizeRemaining() == 0)
+                            break;
+                    }
                 }
             }
-            //no point continuing if we didn't fill this slice, as we must already have fully filled the matchingOrder
-            if (slice.sizeRemaining() > 0) break;
         }
     }
 
@@ -154,7 +138,7 @@ public class Order implements Serializable {
      * @param clientOrderID
      */
     public Order(int clientID, int side, Instrument instrument, int size, int clientOrderID) {
-        this(idCounter.getAndIncrement(), clientID, side, instrument, size, clientOrderID,null);
+        this(idCounter.getAndIncrement(), clientID, side, instrument, size, clientOrderID, null);
     }
 
     /**
@@ -167,7 +151,7 @@ public class Order implements Serializable {
      * @param clientOrderID
      */
     public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID) {
-        this(id, clientID, side, instrument, size, clientOrderID,null);
+        this(id, clientID, side, instrument, size, clientOrderID, null);
     }
 
     /**
@@ -190,6 +174,7 @@ public class Order implements Serializable {
         this.parentOrder = parentOrder;
         fills = new ArrayList<>();
         slices = new ArrayList<>();
+        outAtRouter = false;
     }
 
     /**
@@ -262,6 +247,18 @@ public class Order implements Serializable {
      */
     public void setOrdStatus(char newStatus) {
         this.OrdStatus = newStatus;
+    }
+
+    public boolean getLockState() {
+        return this.outAtRouter;
+    }
+
+    public void lockOrder() {
+        this.outAtRouter = true;
+    }
+
+    public void unlockOrder() {
+        this.outAtRouter = false;
     }
 }
 

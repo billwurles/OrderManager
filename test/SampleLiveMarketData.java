@@ -13,6 +13,7 @@ public class SampleLiveMarketData implements LiveMarketData {
      * @param o
      */
     public void setPrice(Order o) {
-        o.initialMarketPrice = 199 * RANDOM_NUM_GENERATOR.nextDouble();
+        o.initialMarketPrice = 100;
+        //o.initialMarketPrice = 199 * RANDOM_NUM_GENERATOR.nextDouble();
     }
 }

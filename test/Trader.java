@@ -4,7 +4,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.HashMap;
+
 import javax.net.ServerSocketFactory;
+
 import OrderManager.Order;
 import TradeScreen.TradeScreen;
 import java.util.logging.Logger;
@@ -34,6 +36,8 @@ public class Trader extends Thread implements TradeScreen {
         //OM will connect to us
         try {
             omConn = ServerSocketFactory.getDefault().createServerSocket(port).accept();
+
+            //is=new ObjectInputStream( omConn.getInputStream());
             InputStream s = omConn.getInputStream(); //if i try to create an objectinputstream before we have data it will block
             while (true) {
                 is = new ObjectInputStream(s);  //TODO check if we need to create each time. this will block if no data, but maybe we can still try to create it once instead of repeatedly
@@ -70,6 +74,7 @@ public class Trader extends Thread implements TradeScreen {
      */
     public void newOrder(Order order) throws IOException {
         //TODO the order should go in a visual grid, but not needed for test purposes
+        //Thread.sleep(2134);
         orders.put(order.getId(), order);
         acceptOrder(order.getId());
     }
@@ -109,6 +114,7 @@ public class Trader extends Thread implements TradeScreen {
     @Override
     public void price(Order o) throws IOException {
         //TODO should update the trade screen
+        //Thread.sleep(2134);
         sliceOrder(o.getId(), o.sizeRemaining() / 2); //FIXME (Kel): Are we sure that we don't get rounding errors? Can we error here and send bad results?
     }
 

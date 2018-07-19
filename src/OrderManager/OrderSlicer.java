@@ -12,6 +12,7 @@ public class OrderSlicer {
      */
     static int sliceOrder(Order order, int sliceSize) //Slices the order and returns the sliceId
     {
+        System.out.println("Order " + order.getId() + ", Slice size: " + sliceSize + ", Unfilled order size: " + order.sizeRemaining() + ", Sliced order size: " + order.sliceSizes());
         logger.setLevel(Level.INFO);
         logger.info("Slicing Order");
         System.out.println("Slice size: " + sliceSize + "\nUnfilled order size: " + order.sizeRemaining() + "\nSliced order size: " + order.sliceSizes());

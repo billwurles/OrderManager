@@ -6,6 +6,8 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.*;
+
+import Database.Database;
 import LiveMarketData.LiveMarketData;
 import OrderClient.NewOrderSingle;
 import OrderRouter.Router;
@@ -84,6 +86,7 @@ public class OrderManager {
         boolean stillalive = true;
         while (stillalive) {
             //TODO (Kel): Can we think of a better polling technique than using 20 ns sleeps?
+            //we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
             pollClients();
             pollRouters();
             pollTraders();
@@ -154,6 +157,7 @@ public class OrderManager {
                         break;
                     case "newFill":
                         long id = is.readLong();
+                        orders.get(id).unlockOrder();
                         newFill(id, is.readInt(), is.readInt(), is.readDouble());
                         break;
                 }
@@ -190,6 +194,10 @@ public class OrderManager {
         }
     }
 
+    void crossUnfilledOrders() {
+
+    }
+
     /**
      *
      * @throws IOException
@@ -198,11 +206,11 @@ public class OrderManager {
         logger.info("UnfilledOrder");
         for (Order order : orders.values())
         {
+            order.lockOrder();
             if (order.sizeRemaining() == 0) continue;
-            for (int i = 0; i < order.slices.size(); ++i)
-            {
-                if (order.slices.get(i).sizeRemaining() < 0) continue;
-                routeOrder(order.getId(),i,order.slices.get(i).sizeRemaining(),order.slices.get(i));
+            for (int i = 0; i < order.slices.size(); ++i) {
+                if (order.slices.get(i).sizeRemaining() <= 0) continue;
+                routeOrder(order.getId(), i, order.slices.get(i).sizeRemaining(), order.slices.get(i));
             }
         }
     }
@@ -277,32 +285,72 @@ public class OrderManager {
         //Order has a list of slices, and a list of fills, each slice is a child order and each fill is associated with either a child order or the original order
         OrderSlicer.sliceOrder(order, sliceSize);
         OrderSlicer.sliceOrder(order, order.getSize() - order.sliceSizes());
-        for (int sliceId = 0; sliceId < order.slices.size(); ++sliceId) {
-            internalCross(sliceId, order);
-            if (order.slices.get(sliceId).sizeRemaining() > 0)
-                routeOrder(id, sliceId, order.slices.get(sliceId).sizeRemaining(), order.slices.get(sliceId));
+        //internalCross(id, slice);
+        for (int sliceID = 0; sliceID < order.slices.size(); ++sliceID) {
+            if (!order.getLockState())
+                internalCross(sliceID, order);
+            Order slice = order.slices.get(sliceID);
+            System.out.println("Order " + id + ", slice " + sliceID + ": Size " + slice.getSize() + ", Filled " + slice.sizeFilled() + ", Remaining " + slice.sizeRemaining());
+            if (slice.sizeRemaining() > 0) {
+                order.lockOrder();
+                routeOrder(id, sliceID, order.slices.get(sliceID).sizeRemaining(), order.slices.get(sliceID));
+            }
         }
     }
 
     /**
      *
-     * @param id
+     * @param sliceID
      * @param o
      * @throws IOException
      */
-    private void internalCross(long id, Order o) throws IOException {
+    private void internalCross(int sliceID, Order o) throws IOException {
         logger.info("InternalCross");
-        for (Map.Entry<Long, Order> entry : orders.entrySet()) {
-            Order matchingOrder = entry.getValue();
-            if (matchingOrder.getInstrumentRIC().equals(o.getInstrumentRIC()) && matchingOrder.initialMarketPrice == o.initialMarketPrice && matchingOrder.getSide() != o.getSide()) {
-                //TODO add support here and in Order for limit orders
-                int sizeBefore = o.sizeRemaining();
-                o.cross(matchingOrder);
-                if (sizeBefore != o.sizeRemaining()) {
-                    sendOrderToTrader(o, TradeScreen.api.cross);
+        for (Order matchingOrder : orders.values()) {
+            if (!matchingOrder.getInstrumentRIC().equals(o.getInstrumentRIC())) continue;
+            if (matchingOrder.initialMarketPrice != o.initialMarketPrice) continue;
+            if (matchingOrder.getSide() == o.getSide()) continue;
+            if (matchingOrder.getOrdStatus() == 'A') continue;
+            if (matchingOrder.getLockState()) continue;
+            if (o.getLockState()) continue;
+
+            //TODO add support here and in Order for limit orders
+            System.out.println("OrderManager calling internal cross " + o.getId() + " on " + matchingOrder.getId());
+            int sizeBefore = o.sizeRemaining();
+            Order currentSlice = o.slices.get(sliceID);
+            int currentSliceRemaining = currentSlice.sizeRemaining();
+            if (currentSliceRemaining > 0 && matchingOrder.sizeRemaining() > 0 && matchingOrder.slices.size() > 0) {
+                for (int matchingSliceId = 0; matchingSliceId < matchingOrder.slices.size(); ++matchingSliceId ) {
+                    int matchingSliceRemaining = matchingOrder.slices.get(matchingSliceId).sizeRemaining();
+                    if (matchingSliceRemaining > 0) {
+                        int amountToFill = Math.min(currentSliceRemaining, matchingSliceRemaining);
+                        newFill(o.getId(), sliceID, amountToFill, currentSlice.initialMarketPrice);
+                        newFill(matchingOrder.getId(), matchingSliceId, amountToFill, currentSlice.initialMarketPrice);
+                        currentSliceRemaining = currentSlice.sizeRemaining();
+                        if (currentSliceRemaining == 0 || matchingOrder.sizeRemaining() == 0)
+                            break;
+                    }
                 }
             }
+            //o.cross(sliceID, matchingOrder);
+            //newFill(o.getId(), sliceID, )
+            if (sizeBefore != o.sizeRemaining()) {
+                sendOrderToTrader(o, TradeScreen.api.cross);
+            }
         }
+    }
+
+    private void cancelOrder(int clientID, int clientOrderID) {
+        System.out.println("Cancel received from client  " + clientID + " on client order " + clientOrderID);
+        Order orderToCancel = null;
+        for (Map.Entry<Long, Order> orderEntry : orders.entrySet()) {
+            Order order = orderEntry.getValue();
+            if (order.getClientID() == clientID && order.getClientOrderID() == clientOrderID) {
+                orderToCancel = order;
+                break;
+            }
+        }
+        orders.remove(orderToCancel.getId());
     }
 
     /**
@@ -313,18 +361,16 @@ public class OrderManager {
      * @param price
      * @throws IOException
      */
-
     private void newFill(long id, int sliceId, int size, double price) throws IOException {
         Order o = orders.get(id);
         o.slices.get(sliceId).createFill(size, price);
         System.out.println("Order " + id + " size = " + o.getSize() + " size filled = " + o.sizeFilled());
+        sendOrderToTrader(o, TradeScreen.api.fill);
         if (o.sizeRemaining() == 0) {
-            sendOrderToTrader(o, TradeScreen.api.fill);
             SendMessageToClient(id, "F;");
         }
         else {
-
-           SendMessageToClient(id, "P;");
+            SendMessageToClient(id, "P;");
         }
 
     }
@@ -377,6 +423,10 @@ public class OrderManager {
         os.flush();
     }
 
+    private void sendCancel(Order order, Router orderRouter) {
+        //orderRouter.sendCancel(order);
+        //order.orderRouter.writeObject(order);
+    }
 
     /**
      *
