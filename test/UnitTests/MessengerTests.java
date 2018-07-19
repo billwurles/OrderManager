@@ -3,8 +3,9 @@ package UnitTests;
 import OrderClient.NewOrderSingle;
 import Ref.Instrument;
 import Ref.Ric;
-import Utilities.ClientMessenger;
-import Utilities.OrderManagerMessenger;
+import Utilities.Listeners.OrderManagerListener;
+import Utilities.Messengers.ClientMessenger;
+import Utilities.Messengers.OrderManagerMessenger;
 import Utilities.SocketConnectors.SocketListener;
 import Utilities.SocketConnectors.SocketMessenger;
 import org.junit.Before;
@@ -19,6 +20,7 @@ public class MessengerTests {
 
     final InetSocketAddress address = new InetSocketAddress("localhost",2020);
     final int id = 123;
+    final String method = "TheMethod!!";
     final NewOrderSingle nos = new NewOrderSingle(1,4321,765,new Instrument(new Ric("myric.L")));
 
     @Before
@@ -28,54 +30,53 @@ public class MessengerTests {
 
     @Test
     public void clientToOMMsgTest(){
+        Thread omThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    InetSocketAddress[] addresses = new InetSocketAddress[]{address};
+                    OrderManagerListener omMessenger = new OrderManagerListener(addresses,addresses,address);
+                    OrderManagerListener.OrderManagerMessage message = omMessenger.receiveMessage();
+                    assert(message.method.equals("newOrderSingle"));
+                    assert(message.clientOrderID == id);
+                    assert(nos.getInstrument().toString().equals(message.order.getInstrument().toString()));
+                } catch (InterruptedException | IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        omThread.setName("OrderManagerTest");
+        Thread clientThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                OrderManagerMessenger omMessenger = null;
+                try {
+                    ClientMessenger clientMessenger = new ClientMessenger(address);
+                    clientMessenger.sendOrder(id,nos);
+                } catch (InterruptedException | IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        clientThread.setName("ClientMessengerTest");
+
+        omThread.start();
+        clientThread.start();
         try {
-
-            ClientMessenger clientMessenger = new ClientMessenger(address);
-
-            Thread omThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        OrderManagerMessenger omMessenger = new OrderManagerMessenger(address);
-                        OrderManagerMessenger.ClientMessage message = omMessenger.receiveClientMessage();
-                        assert(message.id == id);
-                        assert(nos.getInstrument().equals(message.order.getInstrument()));
-                    } catch (InterruptedException | IOException | ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            Thread clientThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    OrderManagerMessenger omMessenger = null;
-                    try {
-                        ClientMessenger clientMessenger = new ClientMessenger(address);
-                        clientMessenger.sendMessage(id,nos);
-                    } catch (InterruptedException | IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
-            omThread.start();
-            clientThread.start();
-
+            omThread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
     }
 
     @Test
     public void socketListenerMessengerTest(){
         try {
             byte[] dataToSend;
-            final StringBuilder builder = new StringBuilder();
             String result = "";
             boolean returned;
-            //builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
             String theString = "This is the string";
 
             dataToSend = theString.getBytes();
@@ -105,28 +106,24 @@ public class MessengerTests {
                         listener.listenForMessage();
                         while(listener.hasResponse()){
                             byte[] bytes = listener.getResponse();
-                            System.err.println("the bytes are :"+bytes);
+                            System.err.println("\n\n\n\n\nthe bytes are :"+bytes);
                             for(byte b : bytes){
-
-                                //result+=(char) b;
-                                builder.append((char) b + " ");
-                                System.out.print((char) b);
+                                builder.append((char) b);
                             }
+                            System.out.println("Asserting '"+builder.toString()+"' == '"+theString+"'");
+                            sleep(1000);
                             assert(builder.toString().equals(theString));
-                            System.out.println("Asserting "+result+" == "+theString);
-                            //result = builder.toString();
                         }
                     } catch (InterruptedException | IOException e) {
                         e.printStackTrace();
                     }
                 }
             };
-
-
-
             Thread server = new Thread(serverThread);
             Thread client = new Thread(clientThread);
+            server.setName("Server");
             server.start();
+            client.setName("Client");
             client.start();
 
             client.join();

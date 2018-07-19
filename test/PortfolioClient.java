@@ -1,8 +1,9 @@
 import java.io.IOException;
+import java.net.InetSocketAddress;
 
 public class PortfolioClient extends SampleClient {
-    public PortfolioClient(int port) throws IOException {
-        super(port);
+    public PortfolioClient(InetSocketAddress address) throws IOException {
+        super(address);
     }
 
 }

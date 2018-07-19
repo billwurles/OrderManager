@@ -4,11 +4,12 @@ import Ref.Instrument;
 import Ref.Ric;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Random;
 
 class MockClient extends Thread{
-	int port;
+	InetSocketAddress address;
 
 	private static final Instrument[] INSTRUMENTS = {new Instrument(new Ric("VOD.L")), new Instrument(new Ric("BP.L")), new Instrument(new Ric("BT.L"))};
 	private Random numberGenerator;
@@ -17,16 +18,16 @@ class MockClient extends Thread{
 		return new NewOrderSingle(side, size, price, INSTRUMENTS[instrumentID]);
 	}
 
-	MockClient(String name,int port){
-		this.port=port;
+	MockClient(String name, InetSocketAddress address){
+		this.address=address;
 		this.setName(name);
 		this.numberGenerator = new Random();
 	}
 
 	public void run(){
 		try {
-			SampleClient client=new SampleClient(port);
-			if (port == 2000)
+			SampleClient client=new SampleClient(address);
+			if (address.getPort() == 2000)
 				client.sendOrder(newMessage(1, 100, 100.0f, 0));
 			else
 				client.sendOrder(newMessage(2, 100, 100.0f, 0));

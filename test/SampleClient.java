@@ -1,8 +1,6 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,19 +8,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 import OrderClient.Client;
 import OrderClient.NewOrderSingle;
 import OrderManager.Order;
-import Ref.Instrument;
-import Ref.Ric;
+import Utilities.Messengers.ClientMessenger;
+import Utilities.Listeners.ClientListener;
 
 public class SampleClient extends Mock implements Client {
     private static final Random RANDOM_NUM_GENERATOR = new Random();
     private final HashMap<Integer,NewOrderSingle> OUT_QUEUE = new HashMap<>(); //queue for outgoing orders
     private static AtomicInteger id = new AtomicInteger(0); //message id number
-    private Socket omConn; //connection to order manager
 
-    public SampleClient(int port) throws IOException {
+    private ClientMessenger messenger;
+    private ClientListener listener;
+    //private Socket omConn; //connection to order manager
+
+    public SampleClient(InetSocketAddress address) throws IOException {
         //OM will connect to us
-        omConn = new ServerSocket(port).accept();
-        System.out.println("OM connected to client port " + port);
+        //omConn = new ServerSocket(port).accept();
+        System.out.println("OM connected to client port " + address.getPort());
+        try {
+            messenger = new ClientMessenger(address);
+            listener = new ClientListener(address);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
 
@@ -33,26 +41,28 @@ public class SampleClient extends Mock implements Client {
         show("sendOrder: id=" + id + " size=" + newOrder.getSize() + " instrument=" + newOrder.getInstrument().toString());
         if (OUT_QUEUE.put(id.get(), newOrder) != null)
             System.err.println("ERROR!?: Previous ID replaced");
-        if (omConn.isConnected()) {
-            ObjectOutputStream outputStream = new ObjectOutputStream(omConn.getOutputStream());
-            outputStream.writeObject("newOrderSingle");
-            //os.writeObject("35=D;");
-            outputStream.writeInt(id.get());
-            outputStream.writeObject(newOrder);
-            outputStream.flush();
-        }
+        messenger.sendOrder(id.get(), newOrder);
+//        if (omConn.isConnected()) { //TODO get rid of this
+//            ObjectOutputStream outputStream = new ObjectOutputStream(omConn.getOutputStream());
+//            outputStream.writeObject("newOrderSingle");
+//            //os.writeObject("35=D;");
+//            outputStream.writeInt(id.get());
+//            outputStream.writeObject(newOrder);
+//            outputStream.flush();
+//        }
         return id.getAndIncrement();
     }
 
     @Override
     public void sendCancel(int idToCancel) throws IOException {
         show("sendCancel: id=" + idToCancel);
-        if (omConn.isConnected()) {
-            ObjectOutputStream orderManagerStream = new ObjectOutputStream(omConn.getOutputStream());
-            orderManagerStream.writeObject("cancelOrder");
-            orderManagerStream.writeInt(idToCancel);
-            orderManagerStream.flush();
-        }
+        messenger.sendCancel(idToCancel);
+//        if (omConnConn.isConnected()) { //TODO get rid of this
+//            ObjectOutputStream orderManagerStream = new ObjectOutputStream(omConn.getOutputStream());
+//            orderManagerStream.writeObject("cancelOrder");
+//            orderManagerStream.writeInt(idToCancel);
+//            orderManagerStream.flush();
+//        }
     }
 
     @Override
@@ -81,15 +91,18 @@ public class SampleClient extends Mock implements Client {
         try {
             while (true) {
                 //is.wait(); //this throws an exception!!
-                is = new ObjectInputStream(omConn.getInputStream());
+                //is = new ObjectInputStream(omConn.getInputStream());
 
-                String fix = (String) is.readObject();
-                System.out.println(Thread.currentThread().getName() + " received fix message: " + fix);
-                String[] fixTags = fix.split(";");
+                //String fix = (String) is.readObject();
+                //System.out.println(Thread.currentThread().getName() + " received fix message: " + fix);
+                //String[] fixTags = fix.split(";");
+
                 int OrderId = -1;
                 char MsgType;
                 int OrdStatus;
                 methods whatToDo = methods.dontKnow;
+
+                String[] fixTags = listener.receiveResponse();
                 //String[][] fixTagsValues=new String[fixTags.length][2];
                 for (String fixTag : fixTags) {
                     String[] tag_value = fixTag.split("=");
