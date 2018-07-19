@@ -32,7 +32,6 @@ public class MessengerTests {
 
             ClientMessenger clientMessenger = new ClientMessenger(address);
 
-
             Thread omThread = new Thread(new Runnable() {
                 @Override
                 public void run() {

@@ -18,7 +18,7 @@ public class OrderManager {
     private static LiveMarketData liveMarketData;
     private HashMap<Long, Order> orders = new HashMap<>(); //debugger will do this line as it gives state to the object
     //currently recording the number of new order messages we get. TODO why? use it for more?
-    private long id;
+    //private long id;
     private Socket[] orderRouters;
     private Socket[] clients;
     private Socket trader;
@@ -68,6 +68,8 @@ public class OrderManager {
         }
     }
 
+    int cyclenum = 0;
+
     public void mainLoop() throws IOException, ClassNotFoundException, InterruptedException {
         boolean stillalive = true;
         while (stillalive) {
@@ -76,6 +78,9 @@ public class OrderManager {
             pollClients();
             pollRouters();
             pollTraders();
+            if (cyclenum % 500 == 0)
+                routeUnfilledOrders();
+            ++cyclenum;
             Thread.sleep(0, 20);
         }
     }
@@ -91,6 +96,9 @@ public class OrderManager {
                     //call the newOrder message with the clientID and the message (clientMessageId,NewOrderSingle)
                     case "newOrderSingle":
                         newOrder(clientID, is.readInt(), (NewOrderSingle) is.readObject()); //newOrder (clientID,
+                        break;
+                    case "cancelOrder":
+                        cancelOrder(clientID, is.readInt());
                         break;
                     default:
                         System.err.println("Unknown message type");
@@ -144,22 +152,30 @@ public class OrderManager {
         }
     }
 
-    void routeUnfilledOrders() {
-
+    void routeUnfilledOrders() throws IOException {
+        for (Order order : orders.values())
+        {
+            if (order.sizeRemaining() == 0) continue;
+            for (int i = 0; i < order.slices.size(); ++i)
+            {
+                if (order.slices.get(i).sizeRemaining() < 0) continue;
+                routeOrder(order.getId(),i,order.slices.get(i).sizeRemaining(),order.slices.get(i));
+            }
+        }
     }
 
     private void newOrder(int clientID, int clientOrderId, NewOrderSingle nos) throws IOException {
-        orders.put(id, new Order(id, clientID, nos.getSide(), nos.getInstrument(), nos.getSize(), clientOrderId));
+        Order order = new Order(clientID, nos.getSide(), nos.getInstrument(), nos.getSize(), clientOrderId);
+        orders.put(order.getId(), order);
         //send a message to the client with 39=A; //OrdStatus is Fix 39, 'A' is 'Pending New'
         ObjectOutputStream os = new ObjectOutputStream(clients[clientID].getOutputStream());
 
         //ClOrdId is 11=
         os.writeObject("11=" + clientOrderId + ";35=A;39=A;"); //FIXME (Kel): Should this be an *object* output steam?
         os.flush();
-        sendOrderToTrader(orders.get(id), TradeScreen.api.newOrder);
+        sendOrderToTrader(order, TradeScreen.api.newOrder);
         //send the new order to the trading screen
         //don't do anything else with the order, as we are simulating high touch orders and so need to wait for the trader to accept the order
-        id++;
     }
 
     private void sendOrderToTrader(Order order, Object method) throws IOException {
@@ -200,20 +216,23 @@ public class OrderManager {
         OrderSlicer.sliceOrder(order, sliceSize);
         OrderSlicer.sliceOrder(order, order.getSize() - order.sliceSizes());
         //internalCross(id, slice);
-        for (int sliceId = 0; sliceId < order.slices.size(); ++sliceId) {
-            internalCross(sliceId, order);
-            if (order.slices.get(sliceId).sizeRemaining() > 0)
-                routeOrder(id, sliceId, order.slices.get(sliceId).sizeRemaining(), order.slices.get(sliceId));
+        for (int sliceID = 0; sliceID < order.slices.size(); ++sliceID) {
+            internalCross(sliceID, order);
+            Order slice = order.slices.get(sliceID);
+            System.out.println("Order " + id + ", slice " + sliceID + ": Size " + slice.getSize() + ", Filled " + slice.sizeFilled() + ", Remaining " + slice.sizeRemaining());
+            if (slice.sizeRemaining() > 0)
+                routeOrder(id, sliceID, order.slices.get(sliceID).sizeRemaining(), order.slices.get(sliceID));
         }
     }
 
-    private void internalCross(long id, Order o) throws IOException {
+    private void internalCross(int sliceID, Order o) throws IOException {
         for (Map.Entry<Long, Order> entry : orders.entrySet()) {
             Order matchingOrder = entry.getValue();
-            if (matchingOrder.getInstrumentRIC().equals(o.getInstrumentRIC()) && matchingOrder.initialMarketPrice == o.initialMarketPrice && matchingOrder.getSide() != o.getSide()) {
+            if (matchingOrder.getInstrumentRIC().equals(o.getInstrumentRIC()) && matchingOrder.initialMarketPrice == o.initialMarketPrice && matchingOrder.getSide() != o.getSide() && matchingOrder.getOrdStatus() != 'A') {
                 //TODO add support here and in Order for limit orders
+                System.out.println("OrderManager calling internal cross " + o.getId() + " on " + matchingOrder.getId());
                 int sizeBefore = o.sizeRemaining();
-                o.cross(matchingOrder);
+                o.cross(sliceID, matchingOrder);
                 if (sizeBefore != o.sizeRemaining()) {
                     sendOrderToTrader(o, TradeScreen.api.cross);
                 }
@@ -221,25 +240,22 @@ public class OrderManager {
         }
     }
 
-    /*private void cancelOrder() {
-
-    }*/
+    private void cancelOrder(int clientID, int clientOrderID) {
+        System.out.println("Cancel received from client  " + clientID + " on client order " + clientOrderID);
+        Order orderToCancel = null;
+        for (Map.Entry<Long, Order> orderEntry : orders.entrySet()){
+            Order order = orderEntry.getValue();
+            if (order.getClientID() == clientID && order.getClientOrderID() == clientOrderID) {
+                orderToCancel = order;
+                break;
+            }
+        }
+        orders.remove(orderToCancel.getId());
+    }
 
     private void newFill(long id, int sliceId, int size, double price) throws IOException {
         Order o = orders.get(id);
-        //This is horrible practice, what we're doing here is ensuring that a new fill for a slice
-        //is also present on the parent, moreover we're ensuring that we can later find out which slices fills
-        //came from by comparing the unique ID of the fills. This should happen automatically in the createFill
-        //method, though this would require changing the syntax of cr
         o.slices.get(sliceId).createFill(size, price);
-        o.createFill(size, price);
-        if (o.sizeRemaining() > 0)
-            o.setOrdStatus('1');
-        else
-            o.setOrdStatus('2');
-        if (o.sizeRemaining() == 0) {
-            Database.write(o);
-        }
         System.out.println("Order " + id + " size = " + o.getSize() + " size filled = " + o.sizeFilled());
         sendOrderToTrader(o, TradeScreen.api.fill);
     }

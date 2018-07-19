@@ -2,19 +2,20 @@ package OrderManager;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 import Ref.Instrument;
 
 public class Order implements Serializable {
     private long id; //TODO these should all be longs
-    private static long idCounter;
+    private static AtomicLong idCounter = new AtomicLong(0);
     private int clientID;
     private int side;
     private Instrument instrument;
     private int size;
     private short orderRouter;
-    private int clientOrderID; //TODO refactor to lowercase C
-
+    private int clientOrderID;
+    private Order parentOrder = null;
     double[] bestPrices;
     int bestPriceCount;
 
@@ -31,7 +32,7 @@ public class Order implements Serializable {
     }
 
     public int newSlice(int sliceSize) {
-        slices.add(new Order(id, clientID, side, instrument, sliceSize, clientOrderID));
+        slices.add(new Order(id, clientID, side, instrument, sliceSize, clientOrderID, this));
         return slices.size() - 1;
     }
 
@@ -53,7 +54,6 @@ public class Order implements Serializable {
 
     //Status state;
     float price() {
-        //TODO this is buggy as it doesn't take account of slices. Let them fix it
         float sum = 0;
         for (Fill fill : fills) {
             sum += fill.price;
@@ -63,70 +63,38 @@ public class Order implements Serializable {
 
     Fill createFill(int size, double price) {
         Fill newFill = new Fill(size, price);
+        parentOrder.fills.add(newFill);
         fills.add(newFill);
         if (sizeRemaining() == 0) {
             OrdStatus = '2';
         } else {
             OrdStatus = '1';
         }
+        if (parentOrder.sizeRemaining() == 0) {
+            parentOrder.OrdStatus = '2';
+        } else {
+            parentOrder.OrdStatus = '1';
+        }
         return newFill;
     }
 
-    void cross(Order matchingOrder) {
+    void cross(int sliceID, Order matchingOrder) {
         //pair slices first and then parent
-        for (Order slice : slices) {
-            if (slice.sizeRemaining() == 0) continue;
-            //TODO could optimise this to not start at the beginning every time
-            for (Order matchingSlice : matchingOrder.slices) {
-                int msze = matchingSlice.sizeRemaining();
-                if (msze == 0) continue;
-                int sze = slice.sizeRemaining();
-                if (sze <= msze) {
-                    slice.createFill(sze, initialMarketPrice);
-                    matchingSlice.createFill(sze, initialMarketPrice);
-                    break;
-                }
-                //sze>msze
-                slice.createFill(msze, initialMarketPrice);
-                matchingSlice.createFill(msze, initialMarketPrice);
-            }
-            int sze = slice.sizeRemaining();
-            int mParent = matchingOrder.sizeRemaining() - matchingOrder.sliceSizes();
-            if (sze > 0 && mParent > 0) {
-                if (sze >= mParent) {
-                    slice.createFill(sze, initialMarketPrice);
-                    matchingOrder.createFill(sze, initialMarketPrice);
-                } else {
-                    slice.createFill(mParent, initialMarketPrice);
-                    matchingOrder.createFill(mParent, initialMarketPrice);
-                }
-            }
-            //no point continuing if we didn't fill this slice, as we must already have fully filled the matchingOrder
-            if (slice.sizeRemaining() > 0) break;
-        }
-        if (sizeRemaining() > 0) {
-            for (Order matchingSlice : matchingOrder.slices) {
-                int msze = matchingSlice.sizeRemaining();
-                if (msze == 0) continue;
-                int sze = sizeRemaining();
-                if (sze <= msze) {
-                    createFill(sze, initialMarketPrice);
-                    matchingSlice.createFill(sze, initialMarketPrice);
-                    break;
-                }
-                //sze>msze
-                createFill(msze, initialMarketPrice);
-                matchingSlice.createFill(msze, initialMarketPrice);
-            }
-            int sze = sizeRemaining();
-            int mParent = matchingOrder.sizeRemaining() - matchingOrder.sliceSizes();
-            if (sze > 0 && mParent > 0) {
-                if (sze >= mParent) {
-                    createFill(sze, initialMarketPrice);
-                    matchingOrder.createFill(sze, initialMarketPrice);
-                } else {
-                    createFill(mParent, initialMarketPrice);
-                    matchingOrder.createFill(mParent, initialMarketPrice);
+        Order currentSlice = slices.get(sliceID);
+        int currentSliceRemaining = currentSlice.sizeRemaining();
+
+        if (currentSliceRemaining > 0 && matchingOrder.sizeRemaining() > 0) {
+            if (matchingOrder.slices.size() > 0) {
+                for (Order matchingSlice : matchingOrder.slices) {
+                    int matchingSliceRemaining = matchingSlice.sizeRemaining();
+                    if (matchingSliceRemaining > 0) {
+                        int amountToFill = Math.min(currentSliceRemaining, matchingSliceRemaining);
+                        currentSlice.createFill(amountToFill, initialMarketPrice);
+                        matchingSlice.createFill(amountToFill, initialMarketPrice);
+                        currentSliceRemaining = currentSlice.sizeRemaining();
+                        if (currentSliceRemaining == 0 || matchingOrder.sizeRemaining() == 0)
+                            break;
+                    }
                 }
             }
         }
@@ -137,16 +105,21 @@ public class Order implements Serializable {
     }*/
 
     public Order(int clientID, int side, Instrument instrument, int size, int clientOrderID) {
-        this(idCounter++, clientID, side, instrument, size, clientOrderID);
+        this(idCounter.getAndIncrement(), clientID, side, instrument, size, clientOrderID, null);
     }
 
     public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID) {
+        this(id, clientID, side, instrument, size, clientOrderID, null);
+    }
+
+    public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID, Order parentOrder) {
         this.id = id;
         this.clientID = clientID;
         this.side = side;
         this.instrument = instrument;
         this.size = size;
         this.clientOrderID = clientOrderID;
+        this.parentOrder = parentOrder;
         fills = new ArrayList<>();
         slices = new ArrayList<>();
     }

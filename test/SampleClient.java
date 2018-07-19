@@ -51,6 +51,7 @@ public class SampleClient extends Mock implements Client {
             ObjectOutputStream orderManagerStream = new ObjectOutputStream(omConn.getOutputStream());
             orderManagerStream.writeObject("cancelOrder");
             orderManagerStream.writeInt(idToCancel);
+            orderManagerStream.flush();
         }
     }
 
