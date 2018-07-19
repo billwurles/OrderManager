@@ -7,77 +7,113 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.*;
 
-import Database.Database;
 import LiveMarketData.LiveMarketData;
 import OrderClient.NewOrderSingle;
 import OrderRouter.Router;
 import TradeScreen.TradeScreen;
-import Utilities.OrderManagerMessenger;
+import Utilities.Listeners.OrderManagerListener;
+import Utilities.Messengers.OrderManagerMessenger;
 
 public class OrderManager {
     private static LiveMarketData liveMarketData;
     private HashMap<Long, Order> orders = new HashMap<>(); //debugger will do this line as it gives state to the object
+    private HashMap<Integer, Integer> clientIDs = new HashMap<>();
+    private HashMap<Integer, Integer> routerIDs = new HashMap<>();
+
     //currently recording the number of new order messages we get. TODO why? use it for more?
     //private long id;
     private Socket[] orderRouters;
     private Socket[] clients;
     private Socket trader;
     private OrderManagerMessenger messenger;
-
-    private Socket connect(InetSocketAddress location) {
-        boolean connected = false;
-        int tryCounter = 0;
-        while (!connected && tryCounter < 600) { //FIXME (Kel) Why are we trying this number of times?
-            try {
-                Socket s = new Socket(location.getHostName(), location.getPort());
-                s.setKeepAlive(true);
-                return s;
-            } catch (IOException e) {
-                //Thread.sleep(1000);
-                tryCounter++;
-            }
-        }
-        System.out.println("Failed to connect to " + location.toString());
-        return null;
-    }
+    private OrderManagerListener listener;
 
     //@param args the command line arguments
     public OrderManager(InetSocketAddress[] orderRouters, InetSocketAddress[] clients, InetSocketAddress trader, LiveMarketData liveMarketData) {
         OrderManager.liveMarketData = liveMarketData;
-        this.trader = connect(trader);
-
-        this.orderRouters = new Socket[orderRouters.length];
 
         try {
+            listener = new OrderManagerListener(clients, orderRouters, trader);
             messenger = new OrderManagerMessenger(trader);
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
 
         int i = 0; //need a counter for the the output array
+        this.orderRouters = new Socket[orderRouters.length];
         for (InetSocketAddress location : orderRouters) {
-            this.orderRouters[i] = connect(location);
+            routerIDs.put(location.getPort(),i);
+            //this.orderRouters[i] = connect(location);
             i++;
         }
 
-        this.clients = new Socket[clients.length];
         i = 0;
+        this.clients = new Socket[clients.length];
         for (InetSocketAddress location : clients) {
-            this.clients[i] = connect(location);
+            clientIDs.put(location.getPort(),i);
+            //this.clients[i] = connect(location);
             i++;
         }
     }
 
     int cyclenum = 0;
 
+    public int getClientId(int port){
+        return clientIDs.get(port);
+    }
+    public int getRouterId(int port){
+        return routerIDs.get(port);
+    }
+
     public void mainLoop() throws IOException, ClassNotFoundException, InterruptedException {
         boolean stillalive = true;
         while (stillalive) {
             //TODO (Kel): Can we think of a better polling technique than using 20 ns sleeps?
             //we want to use the arrayindex as the clientId, so use traditional for loop instead of foreach
-            pollClients();
-            pollRouters();
-            pollTraders();
+
+//            pollClients();
+//            pollRouters();
+//            pollTraders();
+
+            OrderManagerListener.OrderManagerMessage message = listener.receiveMessage();
+            int source = message.source;
+            int clientID, routerId;
+            switch (message.method) { //determine the type of message and process it
+                //call the newOrder message with the clientID and the message (clientMessageId,NewOrderSingle)
+                case "newOrderSingle":
+                    clientID = getClientId(source);
+                    newOrder(clientID, message.clientOrderID, message.order);
+                    break;
+                case "cancelOrder":
+                    clientID = getClientId(source);
+                    cancelOrder(clientID, message.clientOrderID);
+                    break;
+                case "bestPrice":
+                    routerId = getRouterId(source);
+                    long OrderId = message.orderID;
+                    int SliceId = message.sliceID;
+
+                    Order slice = orders.get(OrderId).slices.get(SliceId);
+                    slice.bestPrices[routerId] = message.bestPrice;
+                    slice.bestPriceCount++;
+                    if (slice.bestPriceCount == slice.bestPrices.length)
+                        reallyRouteOrder(SliceId, slice);
+                    break;
+                case "newFill":
+                    long id = message.orderID;
+                    newFill(id, message.sliceID, message.size, message.bestPrice);
+                    //price(id,orders.get(id));
+                    break;
+                case "acceptOrder":
+                    acceptOrder(message.orderID);
+                    break;
+                case "sliceOrder":
+                    sliceOrder(message.orderID, message.size);
+                    break;
+                default:
+                    System.err.println("Unknown message type: "+message.method);
+                    break;
+            }
             if (cyclenum % 500 == 0)
                 routeUnfilledOrders();
             ++cyclenum;

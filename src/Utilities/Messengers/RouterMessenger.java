@@ -1,4 +1,4 @@
-package Utilities;
+package Utilities.Messengers;
 
 
 import OrderRouter.Router;
@@ -15,17 +15,20 @@ public class RouterMessenger {
 
     ByteArrayOutputStream baos;
     ObjectOutputStream output;
+    int port;
 
     public RouterMessenger(InetSocketAddress address) throws InterruptedException, IOException {
         messenger = new SocketMessenger(address);
+        this.port = address.getPort();
     }
 
-    public void routeOrderMsg(int id, int sliceID, int fillSize, double fillPrice) throws IOException {
+    public void routeOrderMsg(long id, int sliceID, int fillSize, double fillPrice) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
+        output.writeInt(port);
         output.writeObject("newFill");
-        output.writeInt(id);
+        output.writeLong(id);
         output.writeInt(sliceID);
         output.writeInt(fillSize);
         output.writeDouble(fillPrice);
@@ -34,12 +37,13 @@ public class RouterMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
-    public void priceAtSizeMsg(int id, int sliceID, double price) throws IOException {
+    public void priceAtSizeMsg(long id, int sliceID, double price) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
+        output.writeInt(port);
         output.writeObject("bestPrice");
-        output.writeInt(id);
+        output.writeLong(id);
         output.writeInt(sliceID);
         output.writeDouble(price);
 

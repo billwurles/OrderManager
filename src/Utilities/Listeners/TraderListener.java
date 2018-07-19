@@ -33,7 +33,7 @@ public class TraderListener {
             input = new ObjectInputStream(new ByteArrayInputStream(response));
 
             TraderResponse response1 = new TraderResponse((TradeScreen.api) input.readObject(), (Order) input.readObject());
-            System.err.printf("Connection %s recieved data from %s:%s\n%s: %s - %s",Thread.currentThread().getName(),address.getHostName(),address.getPort(),response1.method,response1.order.getClientID(),response1.order.getInstrumentRIC());
+            System.err.printf("ConnectionT %s recieved data from %s:%s\n%s: %s - %s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort(),response1.method,response1.order.getSize(),response1.order.getInstrumentRIC());
 
             return response1;
 

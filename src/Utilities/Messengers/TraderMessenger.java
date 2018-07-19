@@ -14,41 +14,49 @@ public class TraderMessenger {
 
     ByteArrayOutputStream baos;
     ObjectOutputStream output;
+    InetSocketAddress address;
+    int port;
 
     public TraderMessenger(InetSocketAddress address) throws InterruptedException, IOException {
+        this.address = address;
         System.err.println("TraderMessenger starting");
         messenger = new SocketMessenger(address);
+        this.port = address.getPort();
     }
 
-    public void acceptOrder(int id) throws IOException {
+    public void acceptOrder(long id) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
+        output.writeInt(port);
+        output.writeObject(address);
         output.writeObject("acceptOrder");
-        output.writeInt(id);
+        output.writeLong(id);
 
         output.flush();
         messenger.sendMessage(baos.toByteArray());
     }
 
-    public void slideOrder(int id, int sliceSize) throws IOException {
+    public void sliceOrder(long id, int sliceSize) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
+        output.writeInt(port);
         output.writeObject("sliceOrder");
-        output.writeInt(id);
+        output.writeLong(id);
         output.writeInt(sliceSize);
 
         output.flush();
         messenger.sendMessage(baos.toByteArray());
     }
 
-    public void priceAtSizeMsg(int id, int sliceID, double price) throws IOException {
+    public void priceAtSizeMsg(long id, int sliceID, double price) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
+        output.writeInt(port);
         output.writeObject("bestPrice");
-        output.writeInt(id);
+        output.writeLong(id);
         output.writeInt(sliceID);
         output.writeDouble(price);
 
@@ -56,7 +64,7 @@ public class TraderMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
-    public void sendCancel(int id){
+    public void sendCancel(long id){
 
     }
 
