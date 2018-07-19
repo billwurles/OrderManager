@@ -29,6 +29,11 @@ public class SocketListener {
 
     Logger logger;
 
+    /**
+     *
+     * @param location
+     * @throws InterruptedException
+     */
     public SocketListener(InetSocketAddress location) throws InterruptedException {
         this.address=location;
         logger= Logger.getLogger(SocketConnection.class.getName());
@@ -36,6 +41,10 @@ public class SocketListener {
         hasResponse=false;
     }
 
+    /**
+     *
+     * @throws IOException
+     */
     public void listenForMessage() throws IOException {
         System.err.printf("%s attempting connection to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
         this.selector = Selector.open();
@@ -69,6 +78,12 @@ public class SocketListener {
         }
     }
 
+    /**
+     *
+     *
+     * @param key
+     * @throws IOException
+     */
     private void accept(SelectionKey key) throws IOException {
         server = (ServerSocketChannel) key.channel();
         channel = server.accept();
@@ -82,6 +97,11 @@ public class SocketListener {
         channel.register(selector, SelectionKey.OP_READ);
     }
 
+    /**
+     *
+     * @param key
+     * @throws IOException
+     */
     private void read(SelectionKey key) throws IOException{
         channel = (SocketChannel) key.channel();
         buffer = ByteBuffer.allocate(2048);

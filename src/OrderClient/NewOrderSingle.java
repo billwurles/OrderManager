@@ -10,6 +10,13 @@ public class NewOrderSingle implements Serializable {
     private float price;
     private Instrument instrument;
 
+    /**
+     *
+     * @param side
+     * @param size
+     * @param price
+     * @param instrument
+     */
     public NewOrderSingle(int side, int size, float price, Instrument instrument) {
         this.side = side;
         this.size = size;
@@ -17,18 +24,34 @@ public class NewOrderSingle implements Serializable {
         this.instrument = instrument;
     }
 
+    /**
+     *
+     * @return
+     */
     public int getSide() {
         return this.side;
     }
 
+    /**
+     *
+     * @return
+     */
     public int getSize() {
         return this.size;
     }
 
+    /**
+     *
+     * @return
+     */
     public float getPrice() {
         return this.price;
     }
 
+    /**
+     *
+     * @return
+     */
     public Instrument getInstrument() {
         return this.instrument;
     }
