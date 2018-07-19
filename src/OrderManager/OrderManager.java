@@ -82,7 +82,7 @@ public class OrderManager {
      * @throws InterruptedException
      */
     public void mainLoop() throws IOException, ClassNotFoundException, InterruptedException {
-        logger.info("Entering the main loop");
+        logger.log(Level.FINE,"Entering the main loop");
         boolean stillalive = true;
         while (stillalive) {
             //TODO (Kel): Can we think of a better polling technique than using 20 ns sleeps?
@@ -103,31 +103,33 @@ public class OrderManager {
      * @throws ClassNotFoundException
      */
     void pollClients() throws IOException, ClassNotFoundException {
-        logger.info("Initializing pollClients");
+        logger.log(Level.FINE,"Initializing pollClients");
         for (int clientID = 0; clientID < this.clients.length; clientID++) { //check if we have data on any of the sockets
             Socket client = this.clients[clientID];
             if (0 < client.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
                 ObjectInputStream is = new ObjectInputStream(client.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
                 String method = (String) is.readObject();
 
-                System.out.println(Thread.currentThread().getName() + " calling " + method);
+                logger.log(Level.FINE, Thread.currentThread().getName() + " calling " + method);
                 switch (method) {
                     case "newOrderSingle":
                         newOrder(clientID, is.readInt(), (NewOrderSingle) is.readObject()); //newOrder (clientID,
                         break;
 
+                    case "cancelOrder":
+                        cancelOrder(clientID, is.readInt());
+                        break;
+
                     default:
-                        System.err.println("Unknown message type");
                         logger.log(Level.SEVERE, "Unknown message type");
                         break;
                 }
-                String[]methodCancel = method.split("=");
-
-                switch (methodCancel[0]) {
-                    case "cancelOrder":
-                        cancelOrder(Long.parseLong(methodCancel[1]));
-                        break;
-                }
+//                String[]methodCancel = method.split("=");
+//                switch (methodCancel[0]) {
+//                    case "cancelOrder":
+//                        cancelOrder(Long.parseLong(methodCancel[1]));
+//                        break;
+//                }
             }
         }
     }
@@ -138,13 +140,13 @@ public class OrderManager {
      * @throws ClassNotFoundException
      */
     void pollRouters() throws IOException, ClassNotFoundException {
-        logger.info("Initializing pollRouters");
+        logger.log(Level.FINE,"Initializing pollRouters");
         for (int routerId = 0; routerId < this.orderRouters.length; routerId++) { //check if we have data on any of the sockets
             Socket router = this.orderRouters[routerId];
             if (0 < router.getInputStream().available()) { //if we have part of a message ready to read, assuming this doesn't fragment messages
                 ObjectInputStream is = new ObjectInputStream(router.getInputStream()); //create an object inputstream, this is a pretty stupid way of doing it, why not create it once rather than every time around the loop
                 String method = (String) is.readObject();
-                System.out.println(Thread.currentThread().getName() + " calling " + method);
+                logger.log(Level.FINE, Thread.currentThread().getName() + " calling " + method);
                 switch (method) { //determine the type of message and process it
                     case "bestPrice":
                         long OrderId = is.readLong();
@@ -171,12 +173,12 @@ public class OrderManager {
      * @throws ClassNotFoundException
      */
     void pollTraders() throws IOException, ClassNotFoundException {
-        logger.info("Initializing pollTraders");
+        logger.log(Level.FINE,"Initialize pollTraders");
         if (0 < this.trader.getInputStream().available()) {
-            logger.info("InputStream available");
+            logger.log(Level.FINE,"InputStream available");
             ObjectInputStream is = new ObjectInputStream(this.trader.getInputStream());
             String method = (String) is.readObject();
-            System.out.println(Thread.currentThread().getName() + " calling " + method);
+            logger.log(Level.FINE,Thread.currentThread().getName() + " calling " + method);
             switch (method) {
                 case "acceptOrder":
                     acceptOrder(is.readLong());
@@ -185,12 +187,12 @@ public class OrderManager {
                     sliceOrder(is.readLong(), is.readInt());
                     break;
                 case "cancel":
-                    cancelOrder(is.readLong());
+                    cancelOrder(is.readInt(), is.readInt());
                     break;
             }
         }
         else{
-            logger.info("No InputStream available");
+            logger.log(Level.FINE,"PollTraders are not initialized");
         }
     }
 
@@ -203,7 +205,7 @@ public class OrderManager {
      * @throws IOException
      */
     void routeUnfilledOrders() throws IOException {
-        logger.info("UnfilledOrder");
+        logger.log(Level.FINE,"UnfilledOrder");
         for (Order order : orders.values())
         {
             order.lockOrder();
@@ -223,7 +225,7 @@ public class OrderManager {
      * @throws IOException
      */
     private void newOrder(int clientID, int clientOrderId, NewOrderSingle nos) throws IOException {
-        logger.info("NewOrder");
+        logger.log(Level.FINE,"NewOrder");
         Order order = new Order(clientID, nos.getSide(), nos.getInstrument(), nos.getSize(), clientOrderId);
         orders.put(order.getId(), order);
         ObjectOutputStream os = new ObjectOutputStream(clients[clientID].getOutputStream());
@@ -240,7 +242,7 @@ public class OrderManager {
      * @throws IOException
      */
     private void sendOrderToTrader(Order o, Object method) throws IOException {
-        logger.info("send order to trader");
+        logger.log(Level.FINE,"Send order to trader");
         ObjectOutputStream ost = new ObjectOutputStream(trader.getOutputStream());
         ost.writeObject(method);
         ost.writeObject(o);
@@ -253,7 +255,7 @@ public class OrderManager {
      * @throws IOException
      */
     public void acceptOrder(long id) throws IOException {
-        logger.info("accept order");
+        logger.log(Level.FINE,"Accept order");
         Order o = orders.get(id);
         if (o != null) {
             if (o.getOrdStatus() != 'A') { //Pending New
@@ -268,7 +270,7 @@ public class OrderManager {
             price(id);
         }
         else{
-            logger.info("orders are null");
+            logger.log(Level.FINE,"Orders are null");
         }
     }
 
@@ -279,7 +281,7 @@ public class OrderManager {
      * @throws IOException
      */
     public void sliceOrder(long id, int sliceSize) throws IOException {
-        logger.info("slicing order in OrderManager");
+        logger.log(Level.FINE,"Slicing order");
         Order order = orders.get(id);
         //slice the order. We have to check this is a valid size.
         //Order has a list of slices, and a list of fills, each slice is a child order and each fill is associated with either a child order or the original order
@@ -305,7 +307,7 @@ public class OrderManager {
      * @throws IOException
      */
     private void internalCross(int sliceID, Order o) throws IOException {
-        logger.info("InternalCross");
+        logger.log(Level.FINE,"Internal cross");
         for (Order matchingOrder : orders.values()) {
             if (!matchingOrder.getInstrumentRIC().equals(o.getInstrumentRIC())) continue;
             if (matchingOrder.initialMarketPrice != o.initialMarketPrice) continue;
@@ -341,7 +343,7 @@ public class OrderManager {
     }
 
     private void cancelOrder(int clientID, int clientOrderID) {
-        System.out.println("Cancel received from client  " + clientID + " on client order " + clientOrderID);
+        System.out.println("Cancel received from client " + clientID + " on client order " + clientOrderID);
         Order orderToCancel = null;
         for (Map.Entry<Long, Order> orderEntry : orders.entrySet()) {
             Order order = orderEntry.getValue();
@@ -350,6 +352,7 @@ public class OrderManager {
                 break;
             }
         }
+        System.out.println("Cancelling order: " + orderToCancel.getId());
         orders.remove(orderToCancel.getId());
     }
 
@@ -458,20 +461,20 @@ public class OrderManager {
 
     /**
      *
-     * @param id
+     * @param clientOrderID
      * @throws IOException
      */
-    public void cancelOrder(long id) throws IOException {
-        logger.info("canceling order");
-        Order o = orders.get(id);
+    public void cancelOrder(int clientOrderID) throws IOException {
+        logger.log(Level.FINE,"Cancelling order");
+        Order o = orders.get(clientOrderID);
         sendOrderToTrader(o, TradeScreen.api.cancel);
-        orders.remove(id);
-        if (orders.get(id) == null) {
-            System.out.println("Order " + id + " has been cancelled");
+        orders.remove(clientOrderID);
+        if (orders.get(clientOrderID) == null) {
+            System.out.println("Order " + clientOrderID + " has been cancelled");
 
         } else{
-            logger.info("order was not cancelled");
-            System.out.println("Order " + id + " has NOT been deleted");}
+            logger.log(Level.FINE,"Order was not cancelled");
+            System.out.println("Order " + clientOrderID + " has NOT been deleted");}
 
     }
 }

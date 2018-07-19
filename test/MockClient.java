@@ -49,7 +49,8 @@ class MockClient extends Thread{
 			}
 			else {
 				client.sendOrder(newMessage(2, 100, 100.0f, 0));
-				client.sendOrder(newMessage(1, 100, 100.0f, 1));
+				int id = client.sendOrder(newMessage(1, 100, 100.0f, 1));
+				client.sendCancel(id);
 			}
 //			for (int currentOrder = 0; currentOrder < 10; currentOrder++) {
 //				client.sendOrder(newMessage(numberGenerator.nextInt(2), numberGenerator.nextInt(1000), numberGenerator.nextFloat() * 200, numberGenerator.nextInt(3)));

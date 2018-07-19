@@ -39,7 +39,7 @@ public class SampleRouter extends Thread implements Router {
             while (true) {
                 is = new ObjectInputStream(omConn.getInputStream());
                 Router.api methodName = (Router.api) is.readObject();
-                System.out.println("Order Router received method call for:" + methodName);
+                //System.out.println("Order Router received method call for: " + methodName);
                 switch (methodName) {
                     case routeOrder:
                         routeOrder(is.readLong(), is.readInt(), is.readInt(), (Instrument) is.readObject());

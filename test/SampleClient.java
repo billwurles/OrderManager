@@ -4,8 +4,6 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import OrderClient.Client;
 import OrderClient.NewOrderSingle;
@@ -16,9 +14,8 @@ import java.util.logging.Level;
 
 
 public class SampleClient extends Mock implements Client {
-    private static final Random RANDOM_NUM_GENERATOR = new Random();
     private final HashMap<Integer,NewOrderSingle> OUT_QUEUE = new HashMap<>(); //queue for outgoing orders
-    private static AtomicInteger id = new AtomicInteger(0); //message id number
+    private int id;
     private Socket omConn; //connection to order manager
     enum methods {newOrderSingleAcknowledgement, dontKnow}
     private static final Logger logger = Logger.getLogger(SampleClient.class.getName());
@@ -32,6 +29,7 @@ public class SampleClient extends Mock implements Client {
         //OM will connect to us
         omConn = new ServerSocket(port).accept();
         System.out.println("OM connected to client port " + port);
+        id = 0;
     }
 
     /**
@@ -45,17 +43,17 @@ public class SampleClient extends Mock implements Client {
         NewOrderSingle newOrder = (NewOrderSingle) par0;
 
         show("sendOrder: id=" + id + " size=" + newOrder.getSize() + " instrument=" + newOrder.getInstrument().toString());
-        if (OUT_QUEUE.put(id.get(), newOrder) != null)
+        if (OUT_QUEUE.put(id, newOrder) != null)
             System.err.println("ERROR!?: Previous ID replaced");
         if (omConn.isConnected()) {
             ObjectOutputStream outputStream = new ObjectOutputStream(omConn.getOutputStream());
             outputStream.writeObject("newOrderSingle");
             //os.writeObject("35=D;");
-            outputStream.writeInt(id.get());
+            outputStream.writeInt(id);
             outputStream.writeObject(newOrder);
             outputStream.flush();
         }
-        return id.getAndIncrement();
+        return id++;
     }
 
     /**
@@ -64,36 +62,33 @@ public class SampleClient extends Mock implements Client {
      * @throws IOException
      */
     @Override
-    public void sendCancel(long idToCancel) throws IOException {
+    public void sendCancel(int idToCancel) throws IOException {
         show("sendCancel: id=" + idToCancel);
         if (omConn.isConnected()) {
             ObjectOutputStream orderManagerStream = new ObjectOutputStream(omConn.getOutputStream());
-            orderManagerStream.writeObject("cancelOrder="+idToCancel);
-            orderManagerStream.writeLong(idToCancel);
+            orderManagerStream.writeObject("cancelOrder");
+            orderManagerStream.writeInt(idToCancel);
             orderManagerStream.flush();
         }
     }
 
     /**
      *
-     * @param order
+     * @param orderID
      */
     @Override
-    public void partialFill(long order){
-        //show(" Partial Order Completed:" + order);
-        System.out.println(Thread.currentThread().getName()+" Partial Order Completed: "+order);
-
+    public void partialFill(long orderID){
+        System.out.println(Thread.currentThread().getName()+" received Partial Fill message for order: " + orderID);
     }
 
     /**
      *
-     * @param order
+     * @param orderID
      */
     @Override
-    public void fullyFilled(long order) {
-        //show(" Fully Filled Order Completed:" + order);
-        System.out.println(Thread.currentThread().getName()+" Fully Filled Order Completed: "+order);
-        OUT_QUEUE.remove(order);
+    public void fullyFilled(long orderID) {
+        System.out.println(Thread.currentThread().getName()+" received Complete Fill message for order: "+ orderID);
+        OUT_QUEUE.remove(orderID);
     }
 
     /**
@@ -123,7 +118,7 @@ public class SampleClient extends Mock implements Client {
                 //is.wait(); //this throws an exception!!
                 is = new ObjectInputStream(omConn.getInputStream());
                 String fix = (String) is.readObject();
-                System.out.println(Thread.currentThread().getName() + " received fix message: " + fix);
+                //System.out.println(Thread.currentThread().getName() + " received fix message: " + fix);
                 String[] fixTags = fix.split(";");
                 int OrderId = -1;
                 char MsgType;
@@ -155,7 +150,6 @@ public class SampleClient extends Mock implements Client {
                         newOrderSingleAcknowledgement(OrderId);
                         break;
                 }
-                show("messageHandler loop");
             }
         } catch (IOException | ClassNotFoundException e) {
             // TODO Auto-generated catch block
@@ -163,9 +157,7 @@ public class SampleClient extends Mock implements Client {
             logger.log(Level.SEVERE, "Error in messageHandler", e);
         }
         logger.exiting(getClass().getName(), "exiting messageHandler");
-
     }
-
 /*listen for connections
 once order manager has connected, then send and cancel orders randomly
 listen for messages from order manager and print them to stdout.*/
