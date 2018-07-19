@@ -396,15 +396,15 @@ public class OrderManager {
      */
     private void reallyRouteOrder(int sliceId, Order o) throws IOException {
         //TODO this assumes we are buying rather than selling
-        int minIndex = 0;
-        double min = o.bestPrices[0];
+        int bestIndex = 0;
+        double currentBest  = o.bestPrices[0];
         for (int i = 1; i < o.bestPrices.length; i++) {
-            if (min > o.bestPrices[i]) {
-                minIndex = i;
-                min = o.bestPrices[i];
+            if ((currentBest > o.bestPrices[i] && o.getSide() == 1) || (currentBest < o.bestPrices[i] && o.getSide() == 2)) {
+                bestIndex = i;
+                currentBest  = o.bestPrices[i];
             }
         }
-        ObjectOutputStream os = new ObjectOutputStream(orderRouters[minIndex].getOutputStream());
+        ObjectOutputStream os = new ObjectOutputStream(orderRouters[bestIndex].getOutputStream());
         os.writeObject(Router.api.routeOrder);
         os.writeLong(o.getId());
         os.writeInt(sliceId);
