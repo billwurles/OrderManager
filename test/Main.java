@@ -11,7 +11,7 @@ public class Main {
 
         //start sample clients
         (new MockClient("Client 1", 2000)).start();
-        //(new MockClient("Client 2", 2001)).start();
+        (new MockClient("Client 2", 2001)).start();
 
         //start sample routers
         (new SampleRouter("Router LSE", 2010)).start();
@@ -20,7 +20,7 @@ public class Main {
         (new Trader("Trader James", 2020)).start();
         //start order manager
         InetSocketAddress[] clients = {new InetSocketAddress("localhost", 2000)
-                //,new InetSocketAddress("localhost", 2001)
+                ,new InetSocketAddress("localhost", 2001)
         };
         InetSocketAddress[] routers = {new InetSocketAddress("localhost", 2010),
                 new InetSocketAddress("localhost", 2011)};

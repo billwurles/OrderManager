@@ -5,7 +5,7 @@ import java.io.IOException;
 import OrderManager.Order;
 
 public interface TradeScreen {
-    enum api {newOrder, price, fill, cross}
+    enum api {newOrder, price, fill, cross, cancel}
 
     void newOrder(Order order) throws IOException;
 
