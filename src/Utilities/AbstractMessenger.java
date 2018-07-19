@@ -14,6 +14,12 @@ public abstract class AbstractMessenger {
     ObjectOutputStream output;
     ObjectInputStream input;
 
+    /**
+     *
+     * @param address
+     * @throws InterruptedException
+     * @throws IOException
+     */
     AbstractMessenger(InetSocketAddress address) throws InterruptedException, IOException {
         messenger = new SocketMessenger(address);
         baos = new ByteArrayOutputStream();

@@ -18,12 +18,16 @@ public class SocketMessenger {
     private SocketChannel channel;
     private InetSocketAddress address;
 
-
     private ByteBuffer buffer;
     private boolean connected;
 
     Logger logger;
 
+    /**
+     *
+     * @param location
+     * @throws InterruptedException
+     */
     public SocketMessenger(InetSocketAddress location) throws InterruptedException {
         System.err.printf("%s attempting connection to %s:%s\n",Thread.currentThread().getName(),location.getHostName(),location.getPort());
         this.address=location;
@@ -43,6 +47,11 @@ public class SocketMessenger {
         }
     }
 
+    /**
+     *
+     * @param data
+     * @throws IOException
+     */
     public void sendMessage(byte[] data) throws IOException {
         buffer = ByteBuffer.wrap(data);
         channel.write(buffer);
