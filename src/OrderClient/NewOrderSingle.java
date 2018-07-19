@@ -12,10 +12,10 @@ public class NewOrderSingle implements Serializable {
 
     /**
      *
-     * @param side
-     * @param size
-     * @param price
-     * @param instrument
+     * @param side Which side the trade is on, 1=buy, 2=sell.
+     * @param size How large the order is.
+     * @param price The price of each security.
+     * @param instrument The instrument being traded.
      */
     public NewOrderSingle(int side, int size, float price, Instrument instrument) {
         this.side = side;
@@ -26,7 +26,7 @@ public class NewOrderSingle implements Serializable {
 
     /**
      *
-     * @return
+     * @return Order side.
      */
     public int getSide() {
         return this.side;
