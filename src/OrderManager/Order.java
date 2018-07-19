@@ -84,16 +84,17 @@ public class Order implements Serializable {
         int currentSliceRemaining = currentSlice.sizeRemaining();
 
         if (currentSliceRemaining > 0 && matchingOrder.sizeRemaining() > 0) {
-            if (matchingOrder.slices.size() > currentSliceRemaining)
-                matchingOrder.newSlice(Math.min(currentSliceRemaining, matchingOrder.sizeRemaining()));
-            for (Order matchingSlice : matchingOrder.slices) {
-                int matchingSliceRemaining = matchingSlice.sizeRemaining();
-                if (matchingSliceRemaining > 0) {
-                    int amountToFill = Math.min(currentSliceRemaining, matchingSliceRemaining);
-                    currentSlice.createFill(amountToFill, initialMarketPrice);
-                    matchingSlice.createFill(amountToFill, initialMarketPrice);
-                    if (currentSlice.sizeRemaining() == 0 || matchingOrder.sizeRemaining() == 0)
-                        break;
+            if (matchingOrder.slices.size() > 0) {
+                for (Order matchingSlice : matchingOrder.slices) {
+                    int matchingSliceRemaining = matchingSlice.sizeRemaining();
+                    if (matchingSliceRemaining > 0) {
+                        int amountToFill = Math.min(currentSliceRemaining, matchingSliceRemaining);
+                        currentSlice.createFill(amountToFill, initialMarketPrice);
+                        matchingSlice.createFill(amountToFill, initialMarketPrice);
+                        currentSliceRemaining = currentSlice.sizeRemaining();
+                        if (currentSliceRemaining == 0 || matchingOrder.sizeRemaining() == 0)
+                            break;
+                    }
                 }
             }
         }
@@ -104,11 +105,11 @@ public class Order implements Serializable {
     }*/
 
     public Order(int clientID, int side, Instrument instrument, int size, int clientOrderID) {
-        this(idCounter.getAndIncrement(), clientID, side, instrument, size, clientOrderID,null);
+        this(idCounter.getAndIncrement(), clientID, side, instrument, size, clientOrderID, null);
     }
 
     public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID) {
-        this(id, clientID, side, instrument, size, clientOrderID,null);
+        this(id, clientID, side, instrument, size, clientOrderID, null);
     }
 
     public Order(long id, int clientID, int side, Instrument instrument, int size, int clientOrderID, Order parentOrder) {
