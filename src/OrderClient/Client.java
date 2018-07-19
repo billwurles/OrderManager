@@ -9,11 +9,11 @@ public interface Client {
     int sendOrder(Object par0) throws IOException;
 
     void sendCancel(int id) throws IOException;
-
     //Incoming messages
-    void partialFill(Order order);
 
-    void fullyFilled(Order order);
+    void partialFill(long order);
+
+    void fullyFilled(long order);
 
     void cancelled(Order order);
 

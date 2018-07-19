@@ -1,6 +1,5 @@
 package Utilities;
 
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -30,7 +29,12 @@ public class SocketConnection {
     Logger logger;
 
 
-
+    /**
+     *
+     * @param location
+     * @param listen
+     * @throws InterruptedException
+     */
     public SocketConnection(InetSocketAddress location, boolean listen) throws InterruptedException {
         System.err.printf("%s attempting connection to %s:%s\n",Thread.currentThread().getName(),location.getHostName(),location.getPort());
         this.address=location;
@@ -51,6 +55,11 @@ public class SocketConnection {
         dataMap = new HashMap<>();
     }
 
+    /**
+     *
+     * @param message
+     * @throws IOException
+     */
     public void sendMessage(String message) throws IOException {
         byte[] data = message.getBytes();
         buffer = ByteBuffer.wrap(data);
@@ -60,6 +69,11 @@ public class SocketConnection {
         //sleep(5000);
     }
 
+    /**
+     *
+     * @return
+     * @throws IOException
+     */
     public String listenForMessage() throws IOException {
         this.selector = Selector.open();
         server = ServerSocketChannel.open();
@@ -91,6 +105,11 @@ public class SocketConnection {
         }
     }
 
+    /**
+     *
+     * @param key
+     * @throws IOException
+     */
     private void accept(SelectionKey key) throws IOException {
         server = (ServerSocketChannel) key.channel();
         channel = server.accept();
@@ -104,6 +123,12 @@ public class SocketConnection {
         channel.register(selector, SelectionKey.OP_READ);
     }
 
+    /**
+     *
+     * @param key
+     * @return
+     * @throws IOException
+     */
     private String read(SelectionKey key) throws IOException{
         channel = (SocketChannel) key.channel();
         buffer = ByteBuffer.allocate(2048);

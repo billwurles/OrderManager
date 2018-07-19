@@ -12,15 +12,25 @@ public class TraderMessenger {
 
     SocketMessenger messenger;
     SocketListener listener;
-
     ByteArrayOutputStream baos;
     ObjectOutputStream output;
     ObjectInputStream input;
 
+    /**
+     *
+     * @param address
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public TraderMessenger(InetSocketAddress address) throws InterruptedException, IOException {
         messenger = new SocketMessenger(address);
     }
 
+    /**
+     *
+     * @param id
+     * @throws IOException
+     */
     public void acceptOrder(int id) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -32,6 +42,12 @@ public class TraderMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @param id
+     * @param sliceSize
+     * @throws IOException
+     */
     public void slideOrder(int id, int sliceSize) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -44,6 +60,13 @@ public class TraderMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @param id
+     * @param sliceID
+     * @param price
+     * @throws IOException
+     */
     public void priceAtSizeMsg(int id, int sliceID, double price) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -57,6 +80,12 @@ public class TraderMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public TraderResponse receiveResponse() throws IOException, ClassNotFoundException {
         listener.listenForMessage();
 
@@ -72,9 +101,9 @@ public class TraderMessenger {
         return new TraderResponse(null, Integer.MIN_VALUE, null);//FIXME This could cause issues
     }
 
-    public void sendCancel(int id){
-
-    }
+//    public void sendCancel(int id){
+//
+//    }
 
     public class TraderResponse {
         public final TradeScreen.api method;

@@ -6,12 +6,21 @@ import java.util.logging.Logger;
 import LiveMarketData.LiveMarketData;
 import OrderManager.OrderManager;
 
+
 class MockOM extends Thread {
     InetSocketAddress[] clients;
     InetSocketAddress[] routers;
     InetSocketAddress trader;
     LiveMarketData liveMarketData;
-
+    private static final Logger logger = Logger.getLogger(MockOM.class.getName());
+    /**
+     *
+     * @param name
+     * @param routers
+     * @param clients
+     * @param trader
+     * @param liveMarketData
+     */
     MockOM(String name, InetSocketAddress[] routers, InetSocketAddress[] clients, InetSocketAddress trader, LiveMarketData liveMarketData) {
         this.clients = clients;
         this.routers = routers;
@@ -22,11 +31,13 @@ class MockOM extends Thread {
 
     @Override
     public void run() {
+        logger.entering(getClass().getName(), "entering run method");
         try {
             //In order to debug constructors you can do F5 F7 F5
             (new OrderManager(routers, clients, trader, liveMarketData)).mainLoop();
         } catch (IOException | ClassNotFoundException | InterruptedException ex) {
-            Logger.getLogger(MockOM.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, "Error in run method", ex);
         }
+        logger.exiting(getClass().getName(), "exiting run method");
     }
 }

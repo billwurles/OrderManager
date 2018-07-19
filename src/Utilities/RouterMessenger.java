@@ -1,7 +1,4 @@
 package Utilities;
-
-
-import OrderClient.NewOrderSingle;
 import OrderRouter.Router;
 import Ref.Instrument;
 
@@ -17,10 +14,24 @@ public class RouterMessenger {
     ObjectOutputStream output;
     ObjectInputStream input;
 
+    /**
+     *
+     * @param address
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public RouterMessenger(InetSocketAddress address) throws InterruptedException, IOException {
         messenger = new SocketMessenger(address);
     }
 
+    /**
+     *
+     * @param id
+     * @param sliceID
+     * @param fillSize
+     * @param fillPrice
+     * @throws IOException
+     */
     public void routeOrderMsg(int id, int sliceID, int fillSize, double fillPrice) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -35,6 +46,13 @@ public class RouterMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @param id
+     * @param sliceID
+     * @param price
+     * @throws IOException
+     */
     public void priceAtSizeMsg(int id, int sliceID, double price) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -48,6 +66,12 @@ public class RouterMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public RouterResponse receiveResponse() throws IOException, ClassNotFoundException {
         listener.listenForMessage();
         int min = Integer.MIN_VALUE;
@@ -79,9 +103,10 @@ public class RouterMessenger {
         return new RouterResponse(null,min,min,min,min,null); //FIXME This could cause issues (null values)
     }
 
-    public void sendCancel(int id){
+//    public void sendCancel(int id){
+//
+//    }
 
-    }
 
     public class RouterResponse {
         public final Router.api methodName;

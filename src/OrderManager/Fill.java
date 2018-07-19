@@ -9,6 +9,11 @@ class Fill implements Serializable {
     final int size;
     final double price;
 
+    /**
+     *
+     * @param size
+     * @param price
+     */
     Fill(int size, double price) {
         this.size = size;
         this.price = price;

@@ -16,10 +16,21 @@ public class OrderManagerMessenger {
     ObjectOutputStream output;
     ObjectInputStream input;
 
+    /**
+     *
+     * @param address
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public OrderManagerMessenger(InetSocketAddress address) throws InterruptedException, IOException {
         messenger = new SocketMessenger(address);
     }
 
+    /**
+     *
+     * @param clientOrderID
+     * @throws IOException
+     */
     public void newOrder(int clientOrderID) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -30,6 +41,14 @@ public class OrderManagerMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+
+    /**
+     *
+     * @param id
+     * @param order
+     * @param method
+     * @throws IOException
+     */
     public void sendOrderToTrader(int id, Order order, Object method) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -42,6 +61,11 @@ public class OrderManagerMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @param clientOrderID
+     * @throws IOException
+     */
     public void acceptOrder(int clientOrderID) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -52,6 +76,14 @@ public class OrderManagerMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @param id
+     * @param slideID
+     * @param size
+     * @param instrument
+     * @throws IOException
+     */
     public void routeOrder(int id, int slideID, int size, Instrument instrument) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -66,6 +98,14 @@ public class OrderManagerMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @param id
+     * @param slideID
+     * @param sizeRemaining
+     * @param instrument
+     * @throws IOException
+     */
     public void reallyRouteOrder(int id, int slideID, int sizeRemaining, Instrument instrument) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -80,6 +120,12 @@ public class OrderManagerMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public ClientMessage receiveClientMessage() throws IOException, ClassNotFoundException {
         listener.listenForMessage();
 
@@ -95,6 +141,12 @@ public class OrderManagerMessenger {
         return new ClientMessage(null, Integer.MIN_VALUE, Integer.MIN_VALUE, null);//FIXME This could cause issues
     }
 
+    /**
+     *
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public RouterMessage receiveRouterMessage() throws IOException, ClassNotFoundException {
         listener.listenForMessage();
 
@@ -114,6 +166,12 @@ public class OrderManagerMessenger {
         return new RouterMessage(null, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Double.MIN_VALUE); //FIXME This could cause issues
     }
 
+    /**
+     *
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public TraderMessage receiveTraderMessage() throws IOException, ClassNotFoundException {
         listener.listenForMessage();
 
@@ -137,6 +195,12 @@ public class OrderManagerMessenger {
         public final String method;
         public final int id, sliceSize;
 
+        /**
+         *
+         * @param method
+         * @param id
+         * @param sliceSize
+         */
         public TraderMessage(String method, int id, int sliceSize) {
             this.method = method;
             this.id = id;
@@ -149,6 +213,14 @@ public class OrderManagerMessenger {
         public final int id, orderID, sliceID;
         public final double bestPrice;
 
+        /**
+         *
+         * @param method
+         * @param id
+         * @param orderID
+         * @param sliceID
+         * @param bestPrice
+         */
         public RouterMessage(String method, int id, int orderID, int sliceID, double bestPrice) {
             this.method = method;
             this.id = id;
@@ -163,6 +235,13 @@ public class OrderManagerMessenger {
         public final int id, clientOrderID;
         public final NewOrderSingle order;
 
+        /**
+         *
+         * @param method
+         * @param id
+         * @param clientOrderID
+         * @param order
+         */
         public ClientMessage(String method, int id, int clientOrderID, NewOrderSingle order) {
             this.method = method;
             this.id = id;

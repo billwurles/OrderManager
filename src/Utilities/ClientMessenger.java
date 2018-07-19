@@ -14,10 +14,22 @@ public class ClientMessenger {
     ObjectOutputStream output;
     ObjectInputStream input;
 
+    /**
+     *
+     * @param address
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public ClientMessenger(InetSocketAddress address) throws InterruptedException, IOException {
         messenger = new SocketMessenger(address);
     }
 
+    /**
+     *
+     * @param id
+     * @param nos
+     * @throws IOException
+     */
     public void sendMessage(int id, NewOrderSingle nos) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
@@ -28,6 +40,12 @@ public class ClientMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
+    /**
+     *
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public String[] receiveResponse() throws IOException, ClassNotFoundException {
         listener.listenForMessage();
 
@@ -45,8 +63,8 @@ public class ClientMessenger {
         }
         return fixTags;
     }
-
-    public void sendCancel(int id){
-
-    }
+//
+//    public void sendCancel(int id){
+//
+//    }
 }

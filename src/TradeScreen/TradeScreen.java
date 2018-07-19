@@ -14,4 +14,6 @@ public interface TradeScreen {
     void sliceOrder(long id, int sliceSize) throws IOException;
 
     void price(Order o) throws InterruptedException, IOException;
+
+    void cancelOrderT(Order order) throws IOException;
 }
