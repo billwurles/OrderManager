@@ -26,10 +26,14 @@ class MockClient extends Thread{
 	public void run(){
 		try {
 			SampleClient client=new SampleClient(port);
-			if (port == 2000)
+			if (port == 2000) {
 				client.sendOrder(newMessage(1, 100, 100.0f, 0));
-			else
+				client.sendOrder(newMessage(2, 100, 100.0f, 1));
+			}
+			else {
 				client.sendOrder(newMessage(2, 100, 100.0f, 0));
+				client.sendOrder(newMessage(1, 100, 100.0f, 1));
+			}
 //			for (int currentOrder = 0; currentOrder < 10; currentOrder++) {
 //				client.sendOrder(newMessage(numberGenerator.nextInt(2), numberGenerator.nextInt(1000), numberGenerator.nextFloat() * 200, numberGenerator.nextInt(3)));
 //			}
