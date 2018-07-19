@@ -7,6 +7,8 @@ import javax.net.ServerSocketFactory;
 import OrderRouter.Router;
 import Ref.Instrument;
 import Ref.Ric;
+
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -14,6 +16,7 @@ import java.util.logging.Level;
 public class SampleRouter extends Thread implements Router {
     private static final Random RANDOM_NUM_GENERATOR = new Random();
     private static final Instrument[] INSTRUMENTS = {new Instrument(new Ric("VOD.L")), new Instrument(new Ric("BP.L")), new Instrument(new Ric("BT.L"))};
+    private final AtomicInteger[] INSTRUMENTQUANTITY = {new AtomicInteger(300),new AtomicInteger(200),new AtomicInteger(400)};
     private Socket omConn;
     private int port;
     private ObjectInputStream is;
@@ -33,6 +36,8 @@ public class SampleRouter extends Thread implements Router {
 
     public void run() {
         //OM will connect to us
+        logger.log(Level.INFO,"Starting RouterInstrumentQuantities (instrument quantity perturbations) on thread" + getClass().getName());
+        new Thread(new RouterInstrumentQuantities(INSTRUMENTQUANTITY)).start();
         logger.entering(getClass().getName(), "entering run method");
         try {
             omConn = ServerSocketFactory.getDefault().createServerSocket(port).accept();
@@ -57,17 +62,35 @@ public class SampleRouter extends Thread implements Router {
         logger.exiting(getClass().getName(), "exiting run method");
     }
 
+
+
     /**
      *
      * @param id
      * @param sliceId
      * @param size
-     * @param i
+     * @param instrument
      * @throws IOException
      */
     @Override
-    public void routeOrder(long id, int sliceId, int size, Instrument i) throws IOException { //MockI.show(""+order);
-        int fillSize = RANDOM_NUM_GENERATOR.nextInt(size+1);
+    public void routeOrder(long id, int sliceId, int size, Instrument instrument) throws IOException { //MockI.show(""+order);
+        int fillSize = 0;
+        for (int i = 0; i < INSTRUMENTS.length; ++i)
+        {
+            if (!instrument.toString().equals(INSTRUMENTS[i].toString())) continue;
+
+
+            if (size <= INSTRUMENTQUANTITY[i].intValue()) {
+                fillSize = size;
+                INSTRUMENTQUANTITY[i].addAndGet(-size);
+            }
+            else
+            {
+                fillSize = size - INSTRUMENTQUANTITY[i].intValue();
+                INSTRUMENTQUANTITY[i].set(0);
+            }
+        }
+
         if (fillSize == 0)
             return;
         System.err.println(currentThread().getName() + ", filled " + fillSize);
