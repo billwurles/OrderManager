@@ -16,6 +16,7 @@ public class Order implements Serializable {
     private short orderRouter;
     private int clientOrderID;
     private Order parentOrder = null;
+    private volatile boolean outAtRouter;
     double[] bestPrices;
     int bestPriceCount;
 
@@ -122,6 +123,7 @@ public class Order implements Serializable {
         this.parentOrder = parentOrder;
         fills = new ArrayList<>();
         slices = new ArrayList<>();
+        outAtRouter = false;
     }
 
     public long getId() {
@@ -158,6 +160,18 @@ public class Order implements Serializable {
 
     public void setOrdStatus(char newStatus) {
         this.OrdStatus = newStatus;
+    }
+
+    public boolean getLockState() {
+        return this.outAtRouter;
+    }
+
+    public void lockOrder() {
+        this.outAtRouter = true;
+    }
+
+    public void unlockOrder() {
+        this.outAtRouter = false;
     }
 }
 

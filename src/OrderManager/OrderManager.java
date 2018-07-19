@@ -120,6 +120,7 @@ public class OrderManager {
                         break;
                     case "newFill":
                         long id = is.readLong();
+                        orders.get(id).unlockOrder();
                         newFill(id, is.readInt(), is.readInt(), is.readDouble());
                         //price(id,orders.get(id));
                         break;
@@ -143,15 +144,16 @@ public class OrderManager {
             }
         }
     }
-
+    void crossUnfilledOrders()
+    {
+        
+    }
     void routeUnfilledOrders() throws IOException {
-        for (Order order : orders.values())
-        {
+        for (Order order : orders.values()) {
             if (order.sizeRemaining() == 0) continue;
-            for (int i = 0; i < order.slices.size(); ++i)
-            {
+            for (int i = 0; i < order.slices.size(); ++i) {
                 if (order.slices.get(i).sizeRemaining() < 0) continue;
-                routeOrder(order.getId(),i,order.slices.get(i).sizeRemaining(),order.slices.get(i));
+                routeOrder(order.getId(), i, order.slices.get(i).sizeRemaining(), order.slices.get(i));
             }
         }
     }
@@ -211,19 +213,37 @@ public class OrderManager {
             internalCross(sliceID, order);
             Order slice = order.slices.get(sliceID);
             System.out.println("Order " + id + ", slice " + sliceID + ": Size " + slice.getSize() + ", Filled " + slice.sizeFilled() + ", Remaining " + slice.sizeRemaining());
-            if (slice.sizeRemaining() > 0)
+            if (slice.sizeRemaining() > 0) {
+                order.lockOrder();
                 routeOrder(id, sliceID, order.slices.get(sliceID).sizeRemaining(), order.slices.get(sliceID));
+            }
         }
     }
 
     private void internalCross(int sliceID, Order o) throws IOException {
         for (Map.Entry<Long, Order> entry : orders.entrySet()) {
             Order matchingOrder = entry.getValue();
-            if (matchingOrder.getInstrumentRIC().equals(o.getInstrumentRIC()) && matchingOrder.initialMarketPrice == o.initialMarketPrice && matchingOrder.getSide() != o.getSide() && matchingOrder.getOrdStatus() != 'A') {
+            if (matchingOrder.getInstrumentRIC().equals(o.getInstrumentRIC()) && matchingOrder.initialMarketPrice == o.initialMarketPrice && matchingOrder.getSide() != o.getSide() && matchingOrder.getOrdStatus() != 'A' && !matchingOrder.getLockState()) {
                 //TODO add support here and in Order for limit orders
                 System.out.println("OrderManager calling internal cross " + o.getId() + " on " + matchingOrder.getId());
                 int sizeBefore = o.sizeRemaining();
+                Order currentSlice = o.slices.get(sliceID);
+                int currentSliceRemaining = currentSlice.sizeRemaining();
+                if (currentSliceRemaining > 0 && matchingOrder.sizeRemaining() > 0 && matchingOrder.slices.size() > 0) {
+                    for (Order matchingSlice : matchingOrder.slices) {
+                        int matchingSliceRemaining = matchingSlice.sizeRemaining();
+                        if (matchingSliceRemaining > 0) {
+                            int amountToFill = Math.min(currentSliceRemaining, matchingSliceRemaining);
+                            newFill(o.getId(), sliceID, amountToFill, currentSlice.initialMarketPrice);
+                            newFill(matchingOrder.getId(), (int) matchingSlice.getId(), amountToFill, currentSlice.initialMarketPrice);
+                            currentSliceRemaining = currentSlice.sizeRemaining();
+                            if (currentSliceRemaining == 0 || matchingOrder.sizeRemaining() == 0)
+                                break;
+                        }
+                    }
+                }
                 o.cross(sliceID, matchingOrder);
+                //newFill(o.getId(), sliceID, )
                 if (sizeBefore != o.sizeRemaining()) {
                     sendOrderToTrader(o, TradeScreen.api.cross);
                 }
@@ -234,7 +254,7 @@ public class OrderManager {
     private void cancelOrder(int clientID, int clientOrderID) {
         System.out.println("Cancel received from client  " + clientID + " on client order " + clientOrderID);
         Order orderToCancel = null;
-        for (Map.Entry<Long, Order> orderEntry : orders.entrySet()){
+        for (Map.Entry<Long, Order> orderEntry : orders.entrySet()) {
             Order order = orderEntry.getValue();
             if (order.getClientID() == clientID && order.getClientOrderID() == clientOrderID) {
                 orderToCancel = order;
