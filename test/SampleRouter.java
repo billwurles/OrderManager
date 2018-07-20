@@ -15,11 +15,12 @@ public class SampleRouter extends Thread implements Router {
     private InetSocketAddress address;
     private RouterListener listener;
     private RouterMessenger messenger;
+    InetSocketAddress om;
 
-    public SampleRouter(String name, InetSocketAddress address) {
+    public SampleRouter(String name, InetSocketAddress address, InetSocketAddress om) {
         this.setName(name);
         this.address = address;
-
+        this.om = om;
     }
 
 //    private ObjectInputStream is;
@@ -30,7 +31,7 @@ public class SampleRouter extends Thread implements Router {
         try {
             try {
                 listener = new RouterListener(address);
-                messenger = new RouterMessenger(address);
+                messenger = new RouterMessenger(om,address.getPort());
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }

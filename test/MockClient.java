@@ -10,6 +10,7 @@ import java.util.Random;
 
 class MockClient extends Thread{
 	InetSocketAddress address;
+	InetSocketAddress om;
 
 	private static final Instrument[] INSTRUMENTS = {new Instrument(new Ric("VOD.L")), new Instrument(new Ric("BP.L")), new Instrument(new Ric("BT.L"))};
 	private Random numberGenerator;
@@ -18,15 +19,16 @@ class MockClient extends Thread{
 		return new NewOrderSingle(side, size, price, INSTRUMENTS[instrumentID]);
 	}
 
-	MockClient(String name, InetSocketAddress address){
+	MockClient(String name, InetSocketAddress address, InetSocketAddress om){
 		this.address=address;
 		this.setName(name);
 		this.numberGenerator = new Random();
+		this.om = om;
 	}
 
 	public void run(){
 		try {
-			SampleClient client=new SampleClient(address);
+			SampleClient client=new SampleClient(address, om);
 			if (address.getPort() == 2000)
 				client.sendOrder(newMessage(1, 100, 100.0f, 0));
 			else

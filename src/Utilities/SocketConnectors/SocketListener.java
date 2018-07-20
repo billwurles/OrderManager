@@ -28,36 +28,30 @@ public class SocketListener {
     private byte[] response;
     private boolean hasResponse;
 
-    public SocketListener(InetSocketAddress address) throws InterruptedException {
-        this.addresses= new InetSocketAddress[]{address};
-        this.address = address; //FIXME this is pretty bad
+    public SocketListener(InetSocketAddress address) throws InterruptedException, IOException {
+        this.address= address;
         dataMap = new HashMap<>();
         hasResponse=false;
+        this.selector = Selector.open();
+//        server.socket().bind(addresses[0]);
+        System.err.printf("%s binding to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
+        server = ServerSocketChannel.open();
+        server.socket().bind(address);
+        server.configureBlocking(false); //TODO maybe we want this to be true?
+        server.register(selector, SelectionKey.OP_ACCEPT);
         System.err.printf("%s listener starting connection to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
     }
 
-    public SocketListener(InetSocketAddress[] addresses) throws InterruptedException {
-        this.addresses=addresses;
-        address = addresses[0]; //FIXME this is pretty bad
-        dataMap = new HashMap<>();
-        hasResponse=false;
-        System.err.printf("%s listener starting connections to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
-    }
+//    public SocketListener(InetSocketAddress[] addresses) throws InterruptedException {
+//        this.addresses=addresses;
+//        address = addresses[0]; //FIXME this is pretty bad
+//        dataMap = new HashMap<>();
+//        hasResponse=false;
+//        System.err.printf("%s listener starting connections to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
+//    }
 
     public void listenForMessage() throws IOException {
         //System.err.printf("%s attempting connection to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
-        this.selector = Selector.open();
-        server = ServerSocketChannel.open();
-        server.socket().bind(addresses[0]);
-//        for(InetSocketAddress address : addresses){
-//            server.socket().bind(address);
-//            System.err.printf("%s binding to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getHostName());
-//        }
-        server.configureBlocking(false); //TODO maybe we want this to be true?
-        server.register(selector, SelectionKey.OP_ACCEPT);
-
-
-
 
         while(true){
             System.err.printf("Conn. %s listening on %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());

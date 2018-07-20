@@ -4,6 +4,7 @@ import OrderClient.NewOrderSingle;
 import OrderManager.Order;
 import OrderRouter.Router;
 import Ref.Instrument;
+import TradeScreen.TradeScreen;
 import Utilities.SocketConnectors.SocketListener;
 import Utilities.SocketConnectors.SocketMessenger;
 
@@ -31,7 +32,7 @@ public class OrderManagerMessenger {
         messenger.sendMessage(baos.toByteArray());
     }
 
-    public void sendOrderToTrader(Order order, Object method) throws IOException {
+    public void sendOrderToTrader(Order order, TradeScreen.api method) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 

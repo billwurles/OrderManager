@@ -18,7 +18,7 @@ public class TraderListener {
     ObjectInputStream input;
     InetSocketAddress address;
 
-    public TraderListener(InetSocketAddress address) throws InterruptedException {
+    public TraderListener(InetSocketAddress address) throws InterruptedException, IOException {
         listener = new SocketListener(address);
         this.address = address;
     }

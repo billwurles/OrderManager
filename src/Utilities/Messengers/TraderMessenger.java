@@ -1,8 +1,5 @@
 package Utilities.Messengers;
 
-import OrderManager.Order;
-import TradeScreen.TradeScreen;
-import Utilities.SocketConnectors.SocketListener;
 import Utilities.SocketConnectors.SocketMessenger;
 
 import java.io.*;
@@ -15,20 +12,20 @@ public class TraderMessenger {
     ByteArrayOutputStream baos;
     ObjectOutputStream output;
     InetSocketAddress address;
-    int port;
+    int source;
 
-    public TraderMessenger(InetSocketAddress address) throws InterruptedException, IOException {
+    public TraderMessenger(InetSocketAddress address, int source) throws InterruptedException, IOException {
         this.address = address;
         System.err.println("TraderMessenger starting");
         messenger = new SocketMessenger(address);
-        this.port = address.getPort();
+        this.source = source;
     }
 
     public void acceptOrder(long id) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
-        output.writeInt(port);
+        output.writeInt(source);
         output.writeObject(address);
         output.writeObject("acceptOrder");
         output.writeLong(id);
@@ -41,7 +38,7 @@ public class TraderMessenger {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
-        output.writeInt(port);
+        output.writeInt(source);
         output.writeObject("sliceOrder");
         output.writeLong(id);
         output.writeInt(sliceSize);
@@ -54,7 +51,7 @@ public class TraderMessenger {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
-        output.writeInt(port);
+        output.writeInt(source);
         output.writeObject("bestPrice");
         output.writeLong(id);
         output.writeInt(sliceID);

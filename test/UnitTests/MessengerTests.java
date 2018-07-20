@@ -35,7 +35,7 @@ public class MessengerTests {
             public void run() {
                 try {
                     InetSocketAddress[] addresses = new InetSocketAddress[]{address};
-                    OrderManagerListener omMessenger = new OrderManagerListener(addresses,addresses,address);
+                    OrderManagerListener omMessenger = new OrderManagerListener(address);
                     OrderManagerListener.OrderManagerMessage message = omMessenger.receiveMessage();
                     assert(message.method.equals("newOrderSingle"));
                     assert(message.clientOrderID == id);
@@ -51,7 +51,7 @@ public class MessengerTests {
             public void run() {
                 OrderManagerMessenger omMessenger = null;
                 try {
-                    ClientMessenger clientMessenger = new ClientMessenger(address);
+                    ClientMessenger clientMessenger = new ClientMessenger(address, 2000);
                     clientMessenger.sendOrder(id,nos);
                 } catch (InterruptedException | IOException e) {
                     e.printStackTrace();

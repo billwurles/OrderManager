@@ -14,20 +14,8 @@ public class OrderManagerListener {
     ObjectInputStream input;
     SocketListener listener;
 
-    public OrderManagerListener(InetSocketAddress[] clients, InetSocketAddress[] routers, InetSocketAddress trader) throws InterruptedException, IOException {
-        System.err.println(trader.getAddress());
-        InetSocketAddress[] addresses = new InetSocketAddress[clients.length+routers.length+1];
-        int count = 0;
-        for(InetSocketAddress address:clients){
-            addresses[count] = address;
-            count++;
-        }
-        for(InetSocketAddress address:routers){
-            addresses[count] = address;
-            count++;
-        }
-        addresses[count] = trader;
-        listener = new SocketListener(addresses);
+    public OrderManagerListener(InetSocketAddress address) throws InterruptedException, IOException {
+        listener = new SocketListener(address);
     }
 
     public OrderManagerMessage receiveMessage() throws IOException, ClassNotFoundException {

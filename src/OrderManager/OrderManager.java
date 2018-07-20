@@ -17,8 +17,8 @@ import Utilities.Messengers.OrderManagerMessenger;
 public class OrderManager {
     private static LiveMarketData liveMarketData;
     private HashMap<Long, Order> orders = new HashMap<>(); //debugger will do this line as it gives state to the object
-    private HashMap<Integer, Integer> clientIDs = new HashMap<>();
-    private HashMap<Integer, Integer> routerIDs = new HashMap<>();
+    private HashMap<Integer, Integer> clientIDs;
+    private HashMap<Integer, Integer> routerIDs;
 
     //currently recording the number of new order messages we get. TODO why? use it for more?
     //private long id;
@@ -29,11 +29,12 @@ public class OrderManager {
     private OrderManagerListener listener;
 
     //@param args the command line arguments
-    public OrderManager(InetSocketAddress[] orderRouters, InetSocketAddress[] clients, InetSocketAddress trader, LiveMarketData liveMarketData) {
+    public OrderManager(InetSocketAddress managerAddress, InetSocketAddress[] orderRouters, InetSocketAddress[] clients, InetSocketAddress trader, LiveMarketData liveMarketData) {
         OrderManager.liveMarketData = liveMarketData;
-
+        clientIDs = new HashMap<>();
+        routerIDs = new HashMap<>();
         try {
-            listener = new OrderManagerListener(clients, orderRouters, trader);
+            listener = new OrderManagerListener(managerAddress);
             messenger = new OrderManagerMessenger(trader);
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
@@ -203,18 +204,19 @@ public class OrderManager {
     private void newOrder(int clientID, int clientOrderId, NewOrderSingle nos) throws IOException {
         Order order = new Order(clientID, nos.getSide(), nos.getInstrument(), nos.getSize(), clientOrderId);
         orders.put(order.getId(), order);
+        messenger.newOrder(order.getClientOrderID());
         //send a message to the client with 39=A; //OrdStatus is Fix 39, 'A' is 'Pending New'
-        ObjectOutputStream os = new ObjectOutputStream(clients[clientID].getOutputStream());
+//        ObjectOutputStream os = new ObjectOutputStream(clients[clientID].getOutputStream());
 
         //ClOrdId is 11=
-        os.writeObject("11=" + clientOrderId + ";35=A;39=A;"); //FIXME (Kel): Should this be an *object* output steam?
-        os.flush();
+//        os.writeObject("11=" + clientOrderId + ";35=A;39=A;"); //FIXME (Kel): Should this be an *object* output steam?
+//        os.flush();
         sendOrderToTrader(order, TradeScreen.api.newOrder);
         //send the new order to the trading screen
         //don't do anything else with the order, as we are simulating high touch orders and so need to wait for the trader to accept the order
     }
 
-    private void sendOrderToTrader(Order order, Object method) throws IOException {
+    private void sendOrderToTrader(Order order, TradeScreen.api method) throws IOException {
 //        ObjectOutputStream ost = new ObjectOutputStream(trader.getOutputStream());
 //        ost.writeObject(method);
 //        ost.writeObject(o);
@@ -236,11 +238,12 @@ public class OrderManager {
             return;
         }
         o.setOrdStatus('0'); //New
-        ObjectOutputStream os = new ObjectOutputStream(clients[o.getClientID()].getOutputStream());
+        messenger.acceptOrder(o.getClientOrderID());
+//        ObjectOutputStream os = new ObjectOutputStream(clients[o.getClientID()].getOutputStream());
         //newOrderSingle acknowledgement
         //ClOrdId is 11=
-        os.writeObject("11=" + o.getClientOrderID() + ";35=A;39=0");
-        os.flush();
+//        os.writeObject("11=" + o.getClientOrderID() + ";35=A;39=0");
+        //os.flush();
 
         price(id);
     }
@@ -298,13 +301,14 @@ public class OrderManager {
 
     private void routeOrder(long id, int sliceId, int size, Order order) throws IOException {
         for (Socket r : orderRouters) {
-            ObjectOutputStream os = new ObjectOutputStream(r.getOutputStream());
-            os.writeObject(Router.api.priceAtSize);
-            os.writeLong(id);
-            os.writeInt(sliceId);
-            os.writeObject(order.getInstrument());
-            os.writeInt(size);
-            os.flush();
+            messenger.routeOrder(id,sliceId,size,order.getInstrument());
+//            ObjectOutputStream os = new ObjectOutputStream(r.getOutputStream());
+//            os.writeObject(Router.api.priceAtSize);
+//            os.writeLong(id);
+//            os.writeInt(sliceId);
+//            os.writeObject(order.getInstrument());
+//            os.writeInt(size);
+//            os.flush();
         }
         //need to wait for these prices to come back before routing
         order.bestPrices = new double[orderRouters.length];

@@ -11,20 +11,22 @@ class MockOM extends Thread {
     InetSocketAddress[] routers;
     InetSocketAddress trader;
     LiveMarketData liveMarketData;
+    InetSocketAddress ordermanager;
 
-    MockOM(String name, InetSocketAddress[] routers, InetSocketAddress[] clients, InetSocketAddress trader, LiveMarketData liveMarketData) {
+    MockOM(String name, InetSocketAddress[] routers, InetSocketAddress om, InetSocketAddress[] clients, InetSocketAddress trader, LiveMarketData liveMarketData) {
         this.clients = clients;
         this.routers = routers;
         this.trader = trader;
         this.liveMarketData = liveMarketData;
         this.setName(name);
+        this.ordermanager = om;
     }
 
     @Override
     public void run() {
         try {
             //In order to debug constructors you can do F5 F7 F5
-            (new OrderManager(routers, clients, trader, liveMarketData)).mainLoop();
+            (new OrderManager(ordermanager, routers, clients, trader, liveMarketData)).mainLoop();
         } catch (IOException | ClassNotFoundException | InterruptedException ex) {
             Logger.getLogger(MockOM.class.getName()).log(Level.SEVERE, null, ex);
         }

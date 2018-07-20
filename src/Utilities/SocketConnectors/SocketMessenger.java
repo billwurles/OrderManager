@@ -17,22 +17,21 @@ public class SocketMessenger {
     private ByteBuffer buffer;
     private boolean connected;
 
-    Logger logger;
 
     public SocketMessenger(InetSocketAddress address) throws InterruptedException {
         System.err.printf("%s attempting connection to %s:%s\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());
         this.address=address;
-        logger= Logger.getLogger(SocketConnection.class.getName());
+
+
     }
 
     public void sendMessage(byte[] data) throws IOException {
         int tryCounter = 0;
         connected=false;
-        while(!connected&&tryCounter<10) {
+        while(!connected&&tryCounter<100) {
             try {
                 channel = SocketChannel.open(address);
                 channel.configureBlocking(false);
-                logger.info("Connection "+Thread.currentThread().getName()+" to "+address.getHostName()+":"+address.getPort()+" made");
                 connected=true;
             } catch (IOException e) {
                 System.err.printf("Connection %s to %s:%s failed\n",Thread.currentThread().getName(),address.getHostName(),address.getPort());

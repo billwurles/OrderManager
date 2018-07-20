@@ -20,12 +20,12 @@ public class SampleClient extends Mock implements Client {
     private ClientListener listener;
     //private Socket omConn; //connection to order manager
 
-    public SampleClient(InetSocketAddress address) throws IOException {
+    public SampleClient(InetSocketAddress address, InetSocketAddress om) throws IOException {
         //OM will connect to us
         //omConn = new ServerSocket(port).accept();
         System.out.println("OM connected to client port " + address.getPort());
         try {
-            messenger = new ClientMessenger(address);
+            messenger = new ClientMessenger(om,address.getPort());
             listener = new ClientListener(address);
         } catch (InterruptedException e) {
             e.printStackTrace();

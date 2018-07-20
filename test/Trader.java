@@ -18,10 +18,12 @@ public class Trader extends Thread implements TradeScreen {
     private TraderMessenger messenger;
     private int port;
     private InetSocketAddress address;
+    InetSocketAddress om;
 
-    Trader(String name, InetSocketAddress address) {
+    Trader(String name, InetSocketAddress address, InetSocketAddress om) {
         this.setName(name);
         this.address = address;
+        this.om = om;
     }
 
 //    ObjectInputStream is;
@@ -32,7 +34,7 @@ public class Trader extends Thread implements TradeScreen {
         try {
             try {
                 listener = new TraderListener(address);
-                messenger = new TraderMessenger(address);
+                messenger = new TraderMessenger(om,address.getPort());
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }

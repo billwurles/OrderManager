@@ -1,7 +1,6 @@
 package Utilities.Messengers;
 
 import OrderClient.NewOrderSingle;
-import Utilities.SocketConnectors.SocketListener;
 import Utilities.SocketConnectors.SocketMessenger;
 
 import java.io.*;
@@ -13,18 +12,18 @@ public class ClientMessenger {
 
     ByteArrayOutputStream baos;
     ObjectOutputStream output;
-    int port;
+    int source;
 
-    public ClientMessenger(InetSocketAddress address) throws InterruptedException {
+    public ClientMessenger(InetSocketAddress address, int source) throws InterruptedException {
         messenger = new SocketMessenger(address);
-        this.port = address.getPort();
+        this.source = source;
     }
 
     public void sendOrder(int id, NewOrderSingle nos) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
-        output.writeInt(port);
+        output.writeInt(source);
         output.writeObject("newOrderSingle");
         output.writeInt(id);
         output.writeObject(nos);
@@ -37,7 +36,7 @@ public class ClientMessenger {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
-        output.writeInt(port);
+        output.writeInt(source);
         output.writeObject("cancelOrder");
         output.writeInt(id);
 

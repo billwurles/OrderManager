@@ -14,7 +14,7 @@ public class RouterListener {
     SocketListener listener;
     ObjectInputStream input;
 
-    public RouterListener(InetSocketAddress address) throws InterruptedException {
+    public RouterListener(InetSocketAddress address) throws InterruptedException, IOException {
         listener = new SocketListener(address);
     }
 

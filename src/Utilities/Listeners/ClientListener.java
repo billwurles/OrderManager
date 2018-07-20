@@ -16,7 +16,7 @@ public class ClientListener {
     SocketListener listener;
     ObjectInputStream input;
 
-    public ClientListener(InetSocketAddress address) throws InterruptedException {
+    public ClientListener(InetSocketAddress address) throws InterruptedException, IOException {
         listener = new SocketListener(address);
     }
 

@@ -1,9 +1,6 @@
 package Utilities.Messengers;
 
 
-import OrderRouter.Router;
-import Ref.Instrument;
-import Utilities.SocketConnectors.SocketListener;
 import Utilities.SocketConnectors.SocketMessenger;
 
 import java.io.*;
@@ -15,18 +12,18 @@ public class RouterMessenger {
 
     ByteArrayOutputStream baos;
     ObjectOutputStream output;
-    int port;
+    int source;
 
-    public RouterMessenger(InetSocketAddress address) throws InterruptedException, IOException {
+    public RouterMessenger(InetSocketAddress address, int source) throws InterruptedException, IOException {
         messenger = new SocketMessenger(address);
-        this.port = address.getPort();
+        this.source = source;
     }
 
     public void routeOrderMsg(long id, int sliceID, int fillSize, double fillPrice) throws IOException {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
-        output.writeInt(port);
+        output.writeInt(source);
         output.writeObject("newFill");
         output.writeLong(id);
         output.writeInt(sliceID);
@@ -41,7 +38,7 @@ public class RouterMessenger {
         baos = new ByteArrayOutputStream();
         output = new ObjectOutputStream(baos);
 
-        output.writeInt(port);
+        output.writeInt(source);
         output.writeObject("bestPrice");
         output.writeLong(id);
         output.writeInt(sliceID);
